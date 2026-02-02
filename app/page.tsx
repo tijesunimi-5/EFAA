@@ -106,7 +106,7 @@ const App: React.FC = () => {
           <div className="hidden md:flex items-center gap-8 font-medium text-slate-600">
             <a href="#mission" className="hover:text-teal-700 transition-colors">Mission</a>
             <a href="#how-it-works" className="hover:text-teal-700 transition-colors">How it works</a>
-            <Button variant="outline" className="py-2 text-sm">Download App</Button>
+            <Button variant="outline" className="py-2 text-sm">Get Started</Button>
           </div>
         </div>
       </nav>
@@ -300,11 +300,11 @@ const App: React.FC = () => {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button variant="primary" className="px-12">
-            Download for Android
+            Get Started
           </Button>
-          <Button variant="outline" className="px-12">
+          {/* <Button variant="outline" className="px-12">
             Download for iOS
-          </Button>
+          </Button> */}
         </div>
       </Section>
 
@@ -319,7 +319,7 @@ const App: React.FC = () => {
           </div>
 
           <p className="text-slate-500 text-sm">
-            © 2024 EFAA (Nigeria). All rights reserved.
+            © 2026 EFAA (Nigeria). All rights reserved.
           </p>
 
           <div className="flex gap-6 text-slate-400">
