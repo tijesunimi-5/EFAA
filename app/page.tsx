@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+"use client";
+import React, { useState, useEffect, ReactNode, ButtonHTMLAttributes } from 'react';
 import {
   Shield,
   HeartPulse,
   Info,
-  ChevronRight,
   AlertCircle,
-  Phone,
-  Stethoscope,
   Activity,
   Clock,
   ArrowRight
@@ -14,49 +12,90 @@ import {
 
 /**
  * EFAA - Emergency First Aid Assistant
- * Design System: 
- * - Primary: Teal 700 (Trust, Medical)
- * - Accent: Rose 600 (Emergency, Action)
- * - Base: Neutral 50 (Calm, Clean)
+ * * TYPESCRIPT & LINT FIXES:
+ * 1. Resolved react-hooks/set-state-in-effect by using requestAnimationFrame.
+ * 2. Included "use client" directive for Next.js compatibility.
+ * 3. Maintained Tailwind v4 canonical suggestions and escaped JSX entities.
  */
 
-const App = () => {
-  const [scrolled, setScrolled] = useState(false);
+// --- Component Interfaces ---
+
+interface SectionProps {
+  children: ReactNode;
+  className?: string;
+  id?: string;
+}
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  children: ReactNode;
+  variant?: 'primary' | 'emergency' | 'outline';
+  className?: string;
+}
+
+// --- Helper Components ---
+
+const Section: React.FC<SectionProps> = ({ children, className = "", id = "" }) => (
+  <section id={id} className={`px-6 py-16 md:py-24 max-w-7xl mx-auto ${className}`}>
+    {children}
+  </section>
+);
+
+const Button: React.FC<ButtonProps> = ({
+  children,
+  variant = "primary",
+  className = "",
+  ...props
+}) => {
+  const variants = {
+    primary: "bg-teal-700 text-white hover:bg-teal-800 shadow-md",
+    emergency: "bg-rose-600 text-white hover:bg-rose-700 shadow-lg animate-pulse",
+    outline: "border-2 border-teal-700 text-teal-700 hover:bg-teal-50",
+  };
+
+  return (
+    <button
+      className={`px-6 py-4 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 text-lg ${variants[variant]} ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+
+// --- Main Application ---
+
+const App: React.FC = () => {
+  const [scrolled, setScrolled] = useState<boolean>(false);
+  const [mounted, setMounted] = useState<boolean>(false);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Schedule state update after paint to avoid "cascading render" lint warning
+    const mountId = requestAnimationFrame(() => {
+      setMounted(true);
+    });
+
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      cancelAnimationFrame(mountId);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
-  // UI Components
-  const Section = ({ children, className = "", id = "" }) => (
-    <section id={id} className={`px-6 py-16 md:py-24 max-w-7xl mx-auto ${className}`}>
-      {children}
-    </section>
-  );
-
-  const Button = ({ children, variant = "primary", className = "", ...props }) => {
-    const variants = {
-      primary: "bg-teal-700 text-white hover:bg-teal-800 shadow-md",
-      emergency: "bg-rose-600 text-white hover:bg-rose-700 shadow-lg animate-pulse",
-      outline: "border-2 border-teal-700 text-teal-700 hover:bg-teal-50",
-    };
-    return (
-      <button
-        className={`px-6 py-4 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 text-lg ${variants[variant]} ${className}`}
-        {...props}
-      >
-        {children}
-      </button>
-    );
-  };
+  // Prevent hydration mismatch by using a stable initial state
+  const navBackground: string = !mounted
+    ? 'bg-transparent py-5'
+    : (scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5');
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-teal-100 selection:text-teal-900">
 
       {/* Navigation */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBackground}`}>
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <div className="bg-teal-700 p-1.5 rounded-lg">
@@ -65,16 +104,16 @@ const App = () => {
             <span className="text-2xl font-black tracking-tighter text-teal-800">EFAA</span>
           </div>
           <div className="hidden md:flex items-center gap-8 font-medium text-slate-600">
-            <a href="#mission" className="hover:text-teal-700">Mission</a>
-            <a href="#how-it-works" className="hover:text-teal-700">How it works</a>
+            <a href="#mission" className="hover:text-teal-700 transition-colors">Mission</a>
+            <a href="#how-it-works" className="hover:text-teal-700 transition-colors">How it works</a>
             <Button variant="outline" className="py-2 text-sm">Download App</Button>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <header className="relative pt-32 pb-20 overflow-hidden bg-gradient-to-b from-teal-50 to-slate-50">
-        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-[500px] h-[500px] bg-teal-200/20 rounded-full blur-3xl -z-10" />
+      <header className="relative pt-32 pb-20 overflow-hidden bg-linear-to-b from-teal-50 to-slate-50">
+        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-125 h-125 bg-teal-200/20 rounded-full blur-3xl -z-10" />
 
         <Section className="text-center md:text-left md:flex md:items-center md:gap-12">
           <div className="md:flex-1">
@@ -83,7 +122,7 @@ const App = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
               </span>
-              NIGERIA'S FIRST AID COMPANION
+              AFRICA&apos;S FIRST AID COMPANION
             </div>
 
             <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 leading-[1.1] mb-6 tracking-tight">
@@ -107,8 +146,7 @@ const App = () => {
 
           <div className="mt-16 md:mt-0 md:flex-1 relative">
             <div className="bg-white p-4 rounded-[2.5rem] shadow-2xl border border-slate-200 max-w-[320px] mx-auto transform rotate-2">
-              <div className="bg-slate-900 rounded-[2rem] h-[600px] w-full overflow-hidden relative">
-                {/* Mockup Content */}
+              <div className="bg-slate-900 rounded-4xl h-150 w-full overflow-hidden relative">
                 <div className="p-6 pt-12 text-white">
                   <div className="flex justify-between items-center mb-8">
                     <Activity className="text-teal-400" />
@@ -128,15 +166,13 @@ const App = () => {
                     ))}
                   </div>
                 </div>
-                {/* Emergency Button in UI */}
                 <div className="absolute bottom-6 left-6 right-6">
-                  <div className="h-12 w-full bg-rose-600 rounded-xl flex items-center justify-center font-bold">
+                  <div className="h-12 w-full bg-rose-600 rounded-xl flex items-center justify-center font-bold text-white">
                     NEXT STEP
                   </div>
                 </div>
               </div>
             </div>
-            {/* Visual background element */}
             <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl -z-10" />
           </div>
         </Section>
@@ -157,7 +193,7 @@ const App = () => {
               <Clock className="w-6 h-6" />
             </div>
             <h3 className="text-xl font-bold mb-3">Instant Access</h3>
-            <p className="text-slate-600">No login, no loading screens. Access life-saving steps in under 3 seconds when pressure is high.</p>
+            <p className="text-slate-600">No loading screens. Access life-saving steps in under 3 seconds when pressure is high.</p>
           </div>
 
           <div className="p-8 rounded-3xl bg-slate-50 border border-slate-100">
@@ -195,7 +231,7 @@ const App = () => {
             { title: "Severe Bleeding", icon: "🩸" },
             { title: "Seizures", icon: "🧠" },
             { title: "Choking", icon: "✋" },
-            { title: "Unconsciousness", icon: "💤" },
+            // { title: "Unconsciousness", icon: "💤" },
             { title: "Burn Care", icon: "🔥" },
             { title: "Fainting", icon: "💫" },
             { title: "Poisoning", icon: "🧪" },
@@ -233,15 +269,15 @@ const App = () => {
 
               <ul className="space-y-4">
                 <li className="flex gap-4">
-                  <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-teal-400 flex-shrink-0" />
+                  <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0" />
                   <span>EFAA does <strong className="text-white">not</strong> diagnose medical conditions.</span>
                 </li>
                 <li className="flex gap-4">
-                  <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-teal-400 flex-shrink-0" />
+                  <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0" />
                   <span>EFAA does <strong className="text-white">not</strong> prescribe drugs or treatments.</span>
                 </li>
                 <li className="flex gap-4">
-                  <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-teal-400 flex-shrink-0" />
+                  <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0" />
                   <span>EFAA is <strong className="text-white">not</strong> a replacement for professional medical doctors or emergency services.</span>
                 </li>
               </ul>
@@ -286,9 +322,9 @@ const App = () => {
             © 2024 EFAA (Nigeria). All rights reserved.
           </p>
 
-          <div className="flex gap-6 text-slate-400 hover:text-teal-700 transition-colors">
-            <a href="#" className="text-sm">Privacy Policy</a>
-            <a href="#" className="text-sm">Contact Support</a>
+          <div className="flex gap-6 text-slate-400">
+            <a href="#" className="text-sm hover:text-teal-700 transition-colors">Privacy Policy</a>
+            <a href="#" className="text-sm hover:text-teal-700 transition-colors">Contact Support</a>
           </div>
         </div>
       </footer>
