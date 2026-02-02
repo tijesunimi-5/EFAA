@@ -9,6 +9,7 @@ import {
   Clock,
   ArrowRight
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 /**
  * EFAA - Emergency First Aid Assistant
@@ -67,6 +68,7 @@ const Button: React.FC<ButtonProps> = ({
 const App: React.FC = () => {
   const [scrolled, setScrolled] = useState<boolean>(false);
   const [mounted, setMounted] = useState<boolean>(false);
+  const router = useRouter()
 
   useEffect(() => {
     // Schedule state update after paint to avoid "cascading render" lint warning
@@ -106,7 +108,7 @@ const App: React.FC = () => {
           <div className="hidden md:flex items-center gap-8 font-medium text-slate-600">
             <a href="#mission" className="hover:text-teal-700 transition-colors">Mission</a>
             <a href="#how-it-works" className="hover:text-teal-700 transition-colors">How it works</a>
-            <Button variant="outline" className="py-2 text-sm">Get Started</Button>
+            <Button variant="outline" className="py-2 text-sm" onClick={() => router.push('/onboarding')}>Get Started</Button>
           </div>
         </div>
       </nav>
@@ -134,11 +136,11 @@ const App: React.FC = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <Button variant="emergency" className="w-full sm:w-auto px-8 py-5">
+              <Button variant="emergency" className="w-full sm:w-auto px-8 py-5" onClick={() => router.push('/onboarding')}>
                 <AlertCircle className="w-6 h-6" />
                 🚨 Something is happening now
               </Button>
-              <Button variant="outline" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full sm:w-auto" >
                 Explore Scenarios
               </Button>
             </div>
@@ -299,7 +301,7 @@ const App: React.FC = () => {
           Join thousands of Nigerians keeping EFAA on their home screen for peace of mind.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button variant="primary" className="px-12">
+          <Button variant="primary" className="px-12" onClick={() => router.push('/onboarding')}>
             Get Started
           </Button>
           {/* <Button variant="outline" className="px-12">
