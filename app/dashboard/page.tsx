@@ -1,27 +1,26 @@
 "use client";
 
-import React, { ReactNode, useState, useEffect } from 'react';
+import React, {  useState } from 'react';
 import {
   Activity,
   AlertCircle,
   BookOpen,
-  ChevronRight,
+  
   Heart,
   MessageSquare,
   Users,
   Lightbulb,
   Search,
-  Menu,
-  X
 } from 'lucide-react';
 import SButton from '@/components/UI/SButton';
 import Card from '@/components/UI/Card';
 import Header from '@/components/UI/Header';
+import { useRouter } from 'next/navigation';
 
 
 export default function HomeScreen() {
   const [userName, setUserName] = useState("Friend");
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const router = useRouter()
 
   // Mock health nudge
   const dailyNudge = {
@@ -57,7 +56,7 @@ export default function HomeScreen() {
               <p className="text-rose-600/80 text-sm font-medium mb-4 leading-snug">
                 Something is happening right now. Get immediate, step-by-step guidance.
               </p>
-              <SButton variant="emergency" className="py-3 text-base">
+              <SButton variant="emergency" className="py-3 text-base" onClick={() => router.push('/emergency')}>
                 Start Guidance Now
               </SButton>
             </div>
