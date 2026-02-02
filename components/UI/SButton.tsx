@@ -8,12 +8,13 @@ const SButton = ({
   ...props
 }: {
   children: ReactNode;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'emergency';
   className?: string;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) => {
   const variants = {
     primary: "bg-teal-700 text-white hover:bg-teal-800 shadow-md",
     secondary: "bg-white text-teal-700 border-2 border-teal-700 hover:bg-teal-50",
+    emergency: "bg-rose-600 text-white hover:bg-rose-700 shadow-lg shadow-rose-100",
     ghost: "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
   };
 
