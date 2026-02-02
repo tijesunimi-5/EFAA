@@ -1,7 +1,7 @@
 "use client";
 
-import React, { ReactNode, InputHTMLAttributes } from "react";
-import { Mail, Phone, User, Info } from "lucide-react";
+import React, { ReactNode, InputHTMLAttributes, SelectHTMLAttributes } from "react";
+import { Mail, Phone, User, Info, Globe, ChevronRight } from "lucide-react";
 
 /**
  * TYPES & INTERFACES
@@ -11,6 +11,7 @@ export interface FormData {
   fullName: string;
   email: string;
   phone: string;
+  country: string;
 }
 
 interface StepInfoProps {
@@ -29,7 +30,7 @@ const ProgressIndicator = ({ currentStep }: { currentStep: number }) => (
     {[1, 2, 3].map((s) => (
       <div
         key={s}
-        className={`h-1.5 rounded-full transition-all duration-500 ${s <= currentStep ? 'w-8 bg-teal-600' : 'w-4 bg-slate-200'
+        className={`h-1.5 rounded-full transition-all duration-500 ${s <= currentStep ? "w-8 bg-teal-600" : "w-4 bg-slate-200"
           }`}
       />
     ))}
@@ -64,20 +65,55 @@ const InputField = ({ label, icon, ...props }: InputFieldProps) => (
   </div>
 );
 
+interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  label: string;
+  icon: ReactNode;
+  options: { value: string; label: string }[];
+}
+
+const SelectField = ({ label, icon, options, ...props }: SelectFieldProps) => (
+  <div className="mb-5">
+    <label className="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">
+      {label}
+    </label>
+    <div className="relative group">
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-600 transition-colors z-10 pointer-events-none">
+        {icon}
+      </div>
+      <select
+        {...props}
+        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-12 pr-10 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-slate-900 appearance-none cursor-pointer"
+      >
+        <option value="" disabled>
+          Select your country
+        </option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+        <ChevronRight className="w-4 h-4 rotate-90" />
+      </div>
+    </div>
+  </div>
+);
+
 const SButton = ({
   children,
-  variant = 'primary',
+  variant = "primary",
   className = "",
   ...props
 }: {
   children: ReactNode;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: "primary" | "secondary" | "ghost";
   className?: string;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) => {
   const variants = {
     primary: "bg-teal-700 text-white hover:bg-teal-800 shadow-md",
     secondary: "bg-white text-teal-700 border-2 border-teal-700 hover:bg-teal-50",
-    ghost: "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+    ghost: "text-slate-500 hover:text-slate-800 hover:bg-slate-100",
   };
 
   return (
@@ -92,18 +128,20 @@ const SButton = ({
 
 /**
  * STEP INFO COMPONENT
- * Focused on gathering basic profile data to personalize the emergency response.
+ * Gathering profile data and region to personalize the emergency response.
  */
 
-const StepInfo = ({
-  formData,
-  setFormData,
-  nextStep
-}: StepInfoProps) => {
+const StepInfo = ({ formData, setFormData, nextStep }: StepInfoProps) => {
+  const countries = [
+    { value: "nigeria", label: "Nigeria" },
+    { value: "ghana", label: "Ghana" },
+    { value: "kenya", label: "Kenya" },
+    { value: "south_africa", label: "South Africa" },
+    { value: "rwanda", label: "Rwanda" },
+    { value: "other", label: "Other" },
+  ];
 
-  const handleUpdate = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const isValid = formData.fullName.trim() !== "" && formData.country !== "";
 
   return (
     <div className="animate-in fade-in slide-in-from-right-4 duration-500">
@@ -111,7 +149,7 @@ const StepInfo = ({
 
       <h2 className="text-2xl font-bold mb-2 text-slate-900">Tell us about yourself</h2>
       <p className="text-slate-500 mb-8 leading-relaxed">
-        This helps us personalize your emergency support and community safety guidance.
+        This helps us personalize your emergency support.
       </p>
 
       <Card>
@@ -120,8 +158,15 @@ const StepInfo = ({
           placeholder="e.g. Chidi Benson"
           icon={<User className="w-5 h-5" />}
           value={formData.fullName}
-          onChange={(e) => handleUpdate('fullName', e.target.value)}
-          required
+          onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+        />
+
+        <SelectField
+          label="Your Region / Country"
+          icon={<Globe className="w-5 h-5" />}
+          options={countries}
+          value={formData.country}
+          onChange={(e) => setFormData({ ...formData, country: e.target.value })}
         />
 
         <InputField
@@ -130,7 +175,7 @@ const StepInfo = ({
           placeholder="email@example.com"
           icon={<Mail className="w-5 h-5" />}
           value={formData.email}
-          onChange={(e) => handleUpdate('email', e.target.value)}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
         />
 
         <InputField
@@ -139,23 +184,17 @@ const StepInfo = ({
           placeholder="+234..."
           icon={<Phone className="w-5 h-5" />}
           value={formData.phone}
-          onChange={(e) => handleUpdate('phone', e.target.value)}
+          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
         />
 
-        <div className="flex gap-2 mt-2 text-xs text-slate-400 leading-tight bg-slate-50 p-4 rounded-2xl border border-slate-100">
-          <Info className="w-4 h-4 shrink-0 text-teal-600" />
-          <p>
-            Your information helps us improve local emergency guidance. We never share your data with unauthorized third parties.
-          </p>
+        <div className="flex gap-2 mt-2 text-xs text-slate-400 leading-tight bg-slate-50 p-3 rounded-xl">
+          <Info className="w-4 h-4 shrink-0" />
+          <p>Your information helps us improve emergency guidance in your area.</p>
         </div>
       </Card>
 
       <div className="mt-8">
-        <SButton
-          onClick={nextStep}
-          disabled={!formData.fullName.trim()}
-          variant="primary"
-        >
+        <SButton onClick={nextStep} disabled={!isValid}>
           Continue
         </SButton>
       </div>
