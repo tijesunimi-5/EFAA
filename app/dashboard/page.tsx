@@ -74,7 +74,7 @@ export default function HomeScreen() {
               <p className="text-slate-500 text-sm mb-4 leading-snug">
                 Browse medical guides and prepare yourself for future emergencies.
               </p>
-              <SButton variant="secondary" className="py-3 text-base">
+              <SButton variant="secondary" className="py-3 text-base" onClick={() => router.push("/learn")}>
                 Browse Library
               </SButton>
             </div>
