@@ -13,7 +13,7 @@ const Header = () => {
           </div>
           <span className="font-black tracking-tighter text-teal-800 text-xl uppercase">EFAA</span>
         </div>
-        <div className="navigations flex justify-between w-100">
+        <div className="navigations justify-between w-100 hidden lg:flex lg:gap-8 lg:text-sm lg:font-medium lg:text-slate-700">
           <a href='#' className='hover:text-teal-300 cursor-pointer transition-all duration-200 ease-in'>My Profile</a>
           <a href='#' className='hover:text-teal-300 cursor-pointer transition-all duration-200 ease-in'>Search Topics</a>
           <a href='#' className='hover:text-teal-300 cursor-pointer transition-all duration-200 ease-in'>Join Community</a>
