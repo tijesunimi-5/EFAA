@@ -126,18 +126,18 @@ export default function HomeScreen() {
       </footer>
 
       {/* --- Mobile Bottom Nav (Simplified) --- */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-8 py-3 flex justify-around items-center md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-8 py-3 flex justify-around items-center md:hidden z-20">
         <button className="text-teal-700 flex flex-col items-center gap-1">
           <Activity className="w-6 h-6" />
           <span className="text-[10px] font-bold">HOME</span>
         </button>
-        <button className="text-slate-400 flex flex-col items-center gap-1">
+        <button className="text-slate-400 flex flex-col items-center gap-1" onClick={() => router.push('/search')}>
           <Search className="w-6 h-6" />
           <span className="text-[10px] font-bold">SEARCH</span>
         </button>
-        <button className="text-slate-400 flex flex-col items-center gap-1">
+        <button className="text-slate-400 flex flex-col items-center gap-1" onClick={() => router.push('/help')}>
           <BookOpen className="w-6 h-6" />
-          <span className="text-[10px] font-bold">GUIDES</span>
+          <span className="text-[10px] font-bold">HELP</span>
         </button>
       </nav>
 
