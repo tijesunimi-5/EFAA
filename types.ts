@@ -29,3 +29,36 @@ export interface LearningContent {
   sections: LearningSection[];
   questions: PracticeQuestion[];
 }
+
+
+export interface EmergencyStep {
+  title: string;
+  instruction: string;
+  helperText: string;
+  hasTimer: boolean;
+  threshold?: number;
+}
+
+export interface EmergencyCondition {
+  id: number;
+  name: string;
+  subtitle: string;
+  sessions: number;
+  status: 'Live' | 'Draft' | 'Under Review';
+  updated: string;
+  steps: EmergencyStep[];
+}
+
+export interface DailyNudge {
+  id: number;
+  tip: string;
+  context: string;
+}
+
+export interface Feedback {
+  id: string;
+  name: string;
+  date: string;
+  message: string;
+  status: "Read" | "Unread";
+}

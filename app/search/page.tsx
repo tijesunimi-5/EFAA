@@ -120,8 +120,8 @@ const SearchInput = ({
 
 const ConditionCard = ({ condition }: { condition: Condition }) => (
   <div
-    onClick={() => window.location.href = `/conditions/${condition.slug}`}
-    className="bg-white rounded-[2rem] p-5 border border-slate-100 shadow-xs hover:shadow-md hover:border-teal-100 transition-all cursor-pointer group flex flex-col h-full"
+    onClick={() => window.location.href = `/emergency/${condition.slug}`}
+    className="bg-white rounded-4xl p-5 border border-slate-100 shadow-xs hover:shadow-md hover:border-teal-100 transition-all cursor-pointer group flex flex-col h-full"
   >
     <div className={`${condition.color} w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-inner`}>
       {condition.icon}
