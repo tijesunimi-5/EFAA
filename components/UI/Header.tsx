@@ -31,7 +31,7 @@ const Header = () => {
         <div className="fixed inset-0 top-16.25 bg-white z-40 p-6 animate-in slide-in-from-top-4 duration-300">
           <nav className="flex flex-col gap-6 text-lg font-semibold text-slate-700">
             <a href="#" className="flex items-center gap-3"><Activity className="w-5 h-5 text-teal-600" /> My Profile</a>
-            <a href="#" className="flex items-center gap-3"><Search className="w-5 h-5 text-teal-600" /> Search Topics</a>
+            <a href="/search" className="flex items-center gap-3"><Search className="w-5 h-5 text-teal-600" /> Search Topics</a>
             <a href="#" className="flex items-center gap-3"><Users className="w-5 h-5 text-teal-600" /> Join Community</a>
             <div className="h-px bg-slate-100 my-2" />
             <a href="#" className="text-rose-600">Report an Issue</a>
