@@ -3,30 +3,38 @@ import { useAlert } from '../context/Alert';
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
+// Defining a more specific interface for the API response
+interface ApiResponse {
+  error?: boolean;
+  status?: number;
+  message?: string;
+  token?: string;
+  [key: string]: unknown; // Allows for other dynamic backend data
+}
+
 interface ApiHook {
   callApi: (
     endpoint: string,
     method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD",
-    body?: unknown,
-  ) => Promise<unknown>;
+    body?: unknown // Changed 'any' to 'unknown' to fix ESLint
+  ) => Promise<ApiResponse>;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const BASE_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
 export const useAPI = (): ApiHook => {
   const router = useRouter();
-  const { showAlert } = useAlert(); // Access the fancy global alert helper
+  const { showAlert } = useAlert();
 
   const callApi = useCallback(
     async (
       endpoint: string,
       method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" = "GET",
       body: unknown = null
-    ) => {
-      // Ensure endpoint starts with a slash
+    ): Promise<ApiResponse> => {
       const finalEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
 
-      // Use the project-specific 'efaa_token' for one-time registration
+      // Check for token in localStorage (safe for Next.js SSR)
       const token = typeof window !== "undefined" ? localStorage.getItem("efaa_token") : null;
 
       const reqHeaders: HeadersInit = {
@@ -49,41 +57,36 @@ export const useAPI = (): ApiHook => {
       try {
         const response = await fetch(`${BASE_URL}${finalEndpoint}`, options);
 
-        // Handle automatic token refreshing if the backend sends a new one
+        // Persistent Session: Update token if backend rotates it
         const newToken = response.headers.get('token');
         if (newToken) {
           localStorage.setItem('efaa_token', newToken.replace('Bearer ', ''));
         }
 
+        const responseData = await response.json();
+
         if (!response.ok) {
-          let errorMessage = "An error occurred";
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.message || errorData.error || errorMessage;
-          } catch (_e) {
-            // Empty catch with underscore to satisfy ESLint
-          }
+          const errorMessage = responseData.message || responseData.error || "An error occurred";
 
           if (response.status === 401) {
-            // Token expired or invalid
-            showAlert("Session expired. Redirecting...", "error");
-            localStorage.removeItem("efaa_token");
-            router.push("/");
+            // Only clear and redirect if it's a real session failure, not a registration error
+            if (!finalEndpoint.includes('/authentication')) {
+              showAlert("Session expired. Please sign in.", "error");
+              localStorage.removeItem("efaa_token");
+              router.push("/");
+            }
           } else {
-            // Generic backend error (e.g., location connection failed)
             showAlert(errorMessage, "error");
           }
 
-          return { error: true, status: response.status, message: errorMessage };
+          return { error: true, status: response.status, message: errorMessage, ...responseData };
         }
 
-        const responseData = await response.json();
         return responseData;
 
-      } catch (_error) {
-        // Network connection error (Backend is down or no internet)
-        console.error("API call error:", _error);
-        showAlert("Network connection error. Check your internet.", "error");
+      } catch (error) {
+        console.error("API call error:", error);
+        showAlert("Network connection error. Check your server.", "error");
         return { error: true, status: 0, message: "Network connection error" };
       }
     },

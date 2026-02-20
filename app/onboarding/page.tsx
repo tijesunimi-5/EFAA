@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import StepWelcome from '@/components/onboarding/StepWelcome';
@@ -22,8 +22,11 @@ export interface FormData {
   fullName: string;
   email: string;
   phone: string;
-  state: string; // Required for African context/Nigerian states
+  state: string;
   country: string;
+  // Add these for the database
+  latitude?: number;
+  longitude?: number;
 }
 
 export default function OnboardingPage() {
@@ -43,31 +46,51 @@ export default function OnboardingPage() {
   });
 
   /**
+   * SESSION PERSISTENCE LOGIC
+   * Checks if the user is already recognized by the browser
+   */
+  useEffect(() => {
+    const token = localStorage.getItem("efaa_token");
+    if (token) {
+      // If user is already registered, take them straight to dashboard
+      router.push('/dashboard');
+    }
+  }, [router]);
+
+  /**
    * REGISTRATION LOGIC
    * Sends data to Node.js backend POST /users
+   * Updated to receive direct lat/long to avoid React state delay
    */
-  const handleRegistration = async () => {
-    // callApi automatically handles the error showAlert pop-up
-    const result = await callApi("/users", "POST", formData) as {
-      error?: boolean;
-      token?: string;
-      message?: string
+  const handleRegistration = async (lat?: number, long?: number) => {
+    // Combine current form data with direct coordinates to ensure they aren't empty
+    const finalData = {
+      ...formData,
+      latitude: lat ?? formData.latitude,
+      longitude: long ?? formData.longitude
     };
 
+    // 1. Correct the endpoint to match your backend route
+    const result = await callApi("/authentication/users", "POST", finalData);
+
     if (!result.error) {
-      // One-time registration: store the 10-year JWT
+      // 2. The backend sends { token, user }. We store the token for long-term persistence.
       if (result.token) {
         localStorage.setItem("efaa_token", result.token);
       }
-      showAlert("Registration successful! Welcome to EFAA.", "success");
+
+      showAlert("Registration successful! Your device is now recognized.", "success");
       setStep('complete');
+    } else {
+      // callApi already showed the error alert, so we just stop here
+      console.log("Registration failed", result.message);
     }
   };
 
   const nextStep = () => {
     if (step === 1) setStep(2);
     else if (step === 2) setStep(3);
-    else if (step === 3) handleRegistration();
+    // Note: Step 3 (Location) handles its own registration trigger now
   };
 
   const prevStep = () => {
@@ -83,27 +106,35 @@ export default function OnboardingPage() {
     setIsLocating(true);
 
     if (!navigator.geolocation) {
-      showAlert("Geolocation is not supported by your browser", "error");
+      showAlert("Geolocation is not supported", "error");
       setIsLocating(false);
-      nextStep();
+      handleRegistration(); // Register with empty location if not supported
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        // Sync to backend heartbeat if needed immediately
-        console.log("Location captured:", position.coords);
+        const { latitude, longitude } = position.coords;
+
+        // Save into state for UI consistency
+        setFormData(prev => ({
+          ...prev,
+          latitude,
+          longitude
+        }));
+
         setIsLocating(false);
-        showAlert("Location access granted. We can now find nearby help.", "success");
-        nextStep();
+        showAlert("Location captured successfully!", "success");
+
+        // Pass coordinates DIRECTLY to avoid waiting for React state update
+        handleRegistration(latitude, longitude);
       },
-      (_error) => {
-        console.error("Location error:", _error);
+      (error) => {
         setIsLocating(false);
-        showAlert("Location access denied. You can still use EFAA manually.", "info");
-        nextStep();
-      },
-      { timeout: 10000, enableHighAccuracy: true }
+        showAlert("Location denied. You can still use EFAA manually.", "info");
+        console.log("An error occured:", error);
+        handleRegistration(); // Register even if location is denied
+      }
     );
   };
 
