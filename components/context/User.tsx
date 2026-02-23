@@ -1,5 +1,6 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from "react";
+
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 
 interface User {
   id: string;
@@ -20,40 +21,50 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem("efaa_user");
-    const token = localStorage.getItem("efaa_token");
-    return storedUser && token ? JSON.parse(storedUser) : null;
-  });
-  const [isActive, setIsActive] = useState(() => {
-    const storedUser = localStorage.getItem("efaa_user");
-    const token = localStorage.getItem("efaa_token");
-    return !!(storedUser && token);
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [isActive, setIsActive] = useState(false);
   const [onlineTime, setOnlineTime] = useState(0);
-  const [initialLoadComplete, setInitialLoadComplete] = useState(true);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
-  // 1. PERSISTENCE: Load user on mount
+  // Load from localStorage **only on client** after mount
   useEffect(() => {
-    // Initialization is now done in state initializers above
-  }, []);
+    // Skip on server
+    if (typeof window === "undefined") return;
 
-  // 2. TRACKING: Online Timer (Only counts if user is logged in)
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (user) {
-      interval = setInterval(() => {
-        setOnlineTime((prev) => prev + 1);
-      }, 1000);
+    try {
+      const storedUser = localStorage.getItem("efaa_user");
+      const token = localStorage.getItem("efaa_token");
+
+      if (storedUser && token) {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setIsActive(true);
+      }
+    } catch (err) {
+      console.error("Failed to parse stored user:", err);
+      // Optional: clear bad data
+      localStorage.removeItem("efaa_user");
+      localStorage.removeItem("efaa_token");
+    } finally {
+      setInitialLoadComplete(true);
     }
-    return () => clearInterval(interval);
-  }, [user]);
+  }, []); // runs once on client mount
 
-  // 3. LIVE STATUS: WebSocket Pulse
+  // Online timer – only if user is logged in
   useEffect(() => {
     if (!user) return;
 
-    // Use the backend URL from your env
+    const interval = setInterval(() => {
+      setOnlineTime((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // WebSocket pulse – only if user exists
+  useEffect(() => {
+    if (!user) return;
+
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://efaa-backend.onrender.com";
     const ws = new WebSocket(wsUrl);
 
@@ -61,18 +72,26 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       ws.send(JSON.stringify({ type: "IDENTIFY", userId: user.id }));
     };
 
+    // Optional: handle close/error if needed
+    ws.onclose = () => console.log("WebSocket closed");
+    ws.onerror = (err) => console.error("WebSocket error:", err);
+
     return () => ws.close();
   }, [user]);
 
   const login = useCallback((userData: User, token: string) => {
+    if (typeof window === "undefined") return;
+
     localStorage.setItem("efaa_user", JSON.stringify(userData));
     localStorage.setItem("efaa_token", token);
     setUser(userData);
     setIsActive(true);
-    setOnlineTime(0); // Reset timer on new login
+    setOnlineTime(0);
   }, []);
 
   const logout = useCallback(() => {
+    if (typeof window === "undefined") return;
+
     localStorage.removeItem("efaa_user");
     localStorage.removeItem("efaa_token");
     setUser(null);
@@ -81,7 +100,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, isActive, onlineTime, login, logout, initialLoadComplete }}>
+    <UserContext.Provider
+      value={{ user, isActive, onlineTime, login, logout, initialLoadComplete }}
+    >
       {children}
     </UserContext.Provider>
   );
