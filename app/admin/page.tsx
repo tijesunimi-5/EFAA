@@ -560,9 +560,11 @@ export default function AdminSystem() {
     // Wrap state update in requestAnimationFrame to avoid cascading render warning
     const rafId = requestAnimationFrame(() => {
       setIsMounted(true);
-      const loggedIn = localStorage.getItem('efaa_admin_logged_in');
-      if (loggedIn === 'true') {
-        setAuthState('authenticated');
+      if (typeof window !== 'undefined') {
+        const loggedIn = localStorage.getItem('efaa_admin_logged_in');
+        if (loggedIn === 'true') {
+          setAuthState('authenticated');
+        }
       }
     });
 
