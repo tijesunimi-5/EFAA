@@ -596,12 +596,14 @@ export default function AdminSystem() {
   const [feedback] = useState<FeedbackItem[]>(MOCK_FEEDBACK);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     setIsMounted(true);
 
-    // Safe localStorage access – only runs in browser
-    const loggedIn = localStorage.getItem('efaa_admin_logged_in');
-    if (loggedIn === 'true') {
-      setAuthState('authenticated');
+    if (typeof window !== 'undefined') {
+      const loggedIn = localStorage.getItem('efaa_admin_logged_in');
+      if (loggedIn === 'true') {
+        setAuthState('authenticated');
+      }
     }
   }, []);
 
