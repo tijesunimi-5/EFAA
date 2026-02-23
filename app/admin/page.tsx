@@ -405,8 +405,18 @@ const EmergenciesView = ({ conditions, onSave, onDelete }: { conditions: Emergen
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingCondition?.id ? "Edit Condition" : "New Condition"}>
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <input required value={editingCondition?.name || ''} onChange={e => setEditingCondition({ ...editingCondition!, name: e.target.value })} placeholder="Condition Name" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-teal-500" />
-            <select value={editingCondition?.status || 'Draft'} onChange={e => setEditingCondition({ ...editingCondition!, status: e.target.value as 'Live' | 'Draft' | 'Under Review' })} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-teal-500 appearance-none">
+            <input
+              required
+              value={editingCondition?.name || ''}
+              onChange={e => setEditingCondition({ ...editingCondition!, name: e.target.value })}
+              placeholder="Condition Name"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-teal-500"
+            />
+            <select
+              value={editingCondition?.status || 'Draft'}
+              onChange={e => setEditingCondition({ ...editingCondition!, status: e.target.value as 'Live' | 'Draft' | 'Under Review' })}
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-teal-500 appearance-none"
+            >
               <option value="Draft">Draft</option>
               <option value="Live">Live</option>
               <option value="Under Review">Under Review</option>
@@ -416,9 +426,21 @@ const EmergenciesView = ({ conditions, onSave, onDelete }: { conditions: Emergen
             <h5 className="font-bold">Steps</h5>
             {editingCondition?.steps?.map((step, index) => (
               <div key={index} className="p-4 bg-slate-50 rounded-2xl relative">
-                <button type="button" onClick={() => removeStep(index)} className="absolute top-2 right-2 text-rose-500"><Trash2 className="w-4 h-4" /></button>
-                <input value={step.title} onChange={e => updateStep(index, 'title', e.target.value)} placeholder="Step Title" className="w-full mb-2 p-2 border rounded" />
-                <textarea value={step.instruction} onChange={e => updateStep(index, 'instruction', e.target.value)} placeholder="Step Instruction" className="w-full p-2 border rounded h-20" />
+                <button type="button" onClick={() => removeStep(index)} className="absolute top-2 right-2 text-rose-500">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <input
+                  value={step.title}
+                  onChange={e => updateStep(index, 'title', e.target.value)}
+                  placeholder="Step Title"
+                  className="w-full mb-2 p-2 border rounded"
+                />
+                <textarea
+                  value={step.instruction}
+                  onChange={e => updateStep(index, 'instruction', e.target.value)}
+                  placeholder="Step Instruction"
+                  className="w-full p-2 border rounded h-20"
+                />
               </div>
             ))}
             <Button type="button" variant="outline" onClick={addStep} className="w-full">Add Step</Button>
@@ -472,8 +494,20 @@ const NudgesView = ({ nudges, onSave, onDelete }: { nudges: DailyNudge[]; onSave
       </div>
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Manage Nudge">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input required value={editingNudge?.tip || ''} onChange={e => setEditingNudge({ ...editingNudge!, tip: e.target.value })} placeholder="Tip" className="w-full p-3 border rounded-xl" />
-          <textarea required value={editingNudge?.context || ''} onChange={e => setEditingNudge({ ...editingNudge!, context: e.target.value })} placeholder="Context" className="w-full p-3 border rounded-xl h-32" />
+          <input
+            required
+            value={editingNudge?.tip || ''}
+            onChange={e => setEditingNudge({ ...editingNudge!, tip: e.target.value })}
+            placeholder="Tip"
+            className="w-full p-3 border rounded-xl"
+          />
+          <textarea
+            required
+            value={editingNudge?.context || ''}
+            onChange={e => setEditingNudge({ ...editingNudge!, context: e.target.value })}
+            placeholder="Context"
+            className="w-full p-3 border rounded-xl h-32"
+          />
           <Button type="submit" className="w-full">Save</Button>
         </form>
       </Modal>
@@ -490,14 +524,20 @@ const UsersView = () => (
     <Card className="overflow-x-auto">
       <table className="w-full text-left">
         <thead className="border-b">
-          <tr><th className="pb-4 text-slate-400 uppercase text-xs font-black tracking-widest">Name</th><th className="pb-4 text-slate-400 uppercase text-xs font-black tracking-widest">Email</th><th className="pb-4 text-slate-400 uppercase text-xs font-black tracking-widest">Status</th></tr>
+          <tr>
+            <th className="pb-4 text-slate-400 uppercase text-xs font-black tracking-widest">Name</th>
+            <th className="pb-4 text-slate-400 uppercase text-xs font-black tracking-widest">Email</th>
+            <th className="pb-4 text-slate-400 uppercase text-xs font-black tracking-widest">Status</th>
+          </tr>
         </thead>
         <tbody className="divide-y">
           {MOCK_USERS.map(u => (
             <tr key={u.id} className="hover:bg-slate-50 transition-colors">
               <td className="py-4 font-bold text-slate-800">{u.name}</td>
               <td className="py-4 text-slate-500">{u.email}</td>
-              <td className="py-4"><Badge variant={u.status === 'Active' ? 'teal' : 'slate'}>{u.status}</Badge></td>
+              <td className="py-4">
+                <Badge variant={u.status === 'Active' ? 'teal' : 'slate'}>{u.status}</Badge>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -530,8 +570,7 @@ const NavItem = ({ icon: Icon, label, id, activeView, onClick }: NavItemProps) =
   return (
     <button
       onClick={() => onClick(id)}
-      className={`w-full flex items-center gap-3 px-6 py-4 transition-all group relative ${isActive ? 'text-teal-700 bg-teal-50 font-black' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 font-bold'
-        }`}
+      className={`w-full flex items-center gap-3 px-6 py-4 transition-all group relative ${isActive ? 'text-teal-700 bg-teal-50 font-black' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 font-bold'}`}
     >
       {isActive && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-teal-700 rounded-r-full" />}
       <Icon className={`w-5 h-5 ${isActive ? 'text-teal-700' : 'text-slate-300'}`} />
@@ -557,39 +596,39 @@ export default function AdminSystem() {
   const [feedback] = useState<FeedbackItem[]>(MOCK_FEEDBACK);
 
   useEffect(() => {
-    // FIX: Only access localStorage if window exists
-    const rafId = requestAnimationFrame(() => {
-      setIsMounted(true);
-      if (typeof window !== 'undefined') {
-        const loggedIn = window.localStorage.getItem('efaa_admin_logged_in');
-        if (loggedIn === 'true') {
-          setAuthState('authenticated');
-        }
-      }
-    });
+    setIsMounted(true);
 
-    return () => cancelAnimationFrame(rafId);
+    // Safe localStorage access – only runs in browser
+    const loggedIn = localStorage.getItem('efaa_admin_logged_in');
+    if (loggedIn === 'true') {
+      setAuthState('authenticated');
+    }
   }, []);
 
   const handleLogin = () => {
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem('efaa_admin_logged_in', 'true');
+      localStorage.setItem('efaa_admin_logged_in', 'true');
     }
     setAuthState('authenticated');
   };
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
-      window.localStorage.removeItem('efaa_admin_logged_in');
+      localStorage.removeItem('efaa_admin_logged_in');
     }
     setAuthState('login');
   };
 
   const saveCondition = (condition: EmergencyCondition) => {
     if (condition.id) {
-      setConditions(conditions.map(c => c.id === condition.id ? { ...condition, updated: 'Just now' } : c));
+      setConditions(conditions.map(c =>
+        c.id === condition.id ? { ...condition, updated: 'Just now' } : c
+      ));
     } else {
-      setConditions([...conditions, { ...condition, id: Date.now(), sessions: 0, updated: 'Today' }]);
+      setConditions([
+        ...conditions,
+        { ...condition, id: Date.now(), sessions: 0, updated: 'Today' }
+      ]);
     }
   };
 
@@ -613,15 +652,27 @@ export default function AdminSystem() {
     }
   };
 
-  if (!isMounted) return null;
-  if (authState === 'login') return <LoginPage onLogin={handleLogin} onSwitch={() => setAuthState('register')} />;
-  if (authState === 'register') return <RegisterPage onRegister={() => setAuthState('login')} onSwitch={() => setAuthState('login')} />;
+  // Prevent rendering authenticated content before mount (avoids hydration mismatch)
+  if (!isMounted) {
+    return null; // or <div className="min-h-screen bg-slate-50" /> if you want to reduce layout shift
+  }
 
+  if (authState === 'login') {
+    return <LoginPage onLogin={handleLogin} onSwitch={() => setAuthState('register')} />;
+  }
+
+  if (authState === 'register') {
+    return <RegisterPage onRegister={() => setAuthState('login')} onSwitch={() => setAuthState('login')} />;
+  }
+
+  // Authenticated layout
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col md:flex-row overflow-x-hidden">
       <aside className="hidden md:flex w-72 bg-white border-r border-slate-100 flex-col sticky top-0 h-screen z-50">
         <div className="p-8 mb-4 flex items-center gap-3">
-          <div className="bg-teal-700 p-2 rounded-xl"><Activity className="text-white w-6 h-6" /></div>
+          <div className="bg-teal-700 p-2 rounded-xl">
+            <Activity className="text-white w-6 h-6" />
+          </div>
           <span className="text-2xl font-black tracking-tighter text-teal-800 uppercase">EFAA Admin</span>
         </div>
         <nav className="flex-1 space-y-1">
@@ -632,7 +683,10 @@ export default function AdminSystem() {
           <NavItem id="settings" icon={Settings} label="Settings" activeView={activeView} onClick={setActiveView} />
         </nav>
         <div className="p-6">
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-6 py-4 text-rose-500 font-black uppercase tracking-widest hover:bg-rose-50 rounded-2xl transition-all">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-6 py-4 text-rose-500 font-black uppercase tracking-widest hover:bg-rose-50 rounded-2xl transition-all"
+          >
             <LogOut className="w-5 h-5" /> Logout
           </button>
         </div>
@@ -652,7 +706,9 @@ export default function AdminSystem() {
               <Bell className="w-5 h-5" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white" />
             </button>
-            <div className="w-10 h-10 rounded-full bg-linear-to-br from-teal-500 to-teal-800 flex items-center justify-center text-white font-black text-xs">HA</div>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-teal-800 flex items-center justify-center text-white font-black text-xs">
+              HA
+            </div>
           </div>
         </header>
 
@@ -666,10 +722,18 @@ export default function AdminSystem() {
       </main>
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t px-6 py-4 flex justify-between z-50">
-        <button onClick={() => setActiveView('dashboard')} className={activeView === 'dashboard' ? 'text-teal-700' : 'text-slate-300'}><LayoutDashboard /></button>
-        <button onClick={() => setActiveView('users')} className={activeView === 'users' ? 'text-teal-700' : 'text-slate-300'}><Users /></button>
-        <button onClick={() => setActiveView('emergencies')} className={activeView === 'emergencies' ? 'text-teal-700' : 'text-slate-300'}><Activity /></button>
-        <button onClick={() => setActiveView('settings')} className={activeView === 'settings' ? 'text-teal-700' : 'text-slate-300'}><Settings /></button>
+        <button onClick={() => setActiveView('dashboard')} className={activeView === 'dashboard' ? 'text-teal-700' : 'text-slate-300'}>
+          <LayoutDashboard />
+        </button>
+        <button onClick={() => setActiveView('users')} className={activeView === 'users' ? 'text-teal-700' : 'text-slate-300'}>
+          <Users />
+        </button>
+        <button onClick={() => setActiveView('emergencies')} className={activeView === 'emergencies' ? 'text-teal-700' : 'text-slate-300'}>
+          <Activity />
+        </button>
+        <button onClick={() => setActiveView('settings')} className={activeView === 'settings' ? 'text-teal-700' : 'text-slate-300'}>
+          <Settings />
+        </button>
       </nav>
     </div>
   );
