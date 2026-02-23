@@ -56,6 +56,7 @@ export const useAPI = (): ApiHook => {
 
       try {
         const response = await fetch(`${BASE_URL}${finalEndpoint}`, options);
+        console.log(`API Request: ${BASE_URL}${finalEndpoint} - Method: ${method}`);
 
         // Persistent Session: Update token if backend rotates it
         const newToken = response.headers.get('token');
