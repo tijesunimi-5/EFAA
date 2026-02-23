@@ -557,11 +557,11 @@ export default function AdminSystem() {
   const [feedback] = useState<FeedbackItem[]>(MOCK_FEEDBACK);
 
   useEffect(() => {
-    // Wrap state update in requestAnimationFrame to avoid cascading render warning
+    // FIX: Only access localStorage if window exists
     const rafId = requestAnimationFrame(() => {
       setIsMounted(true);
       if (typeof window !== 'undefined') {
-        const loggedIn = localStorage.getItem('efaa_admin_logged_in');
+        const loggedIn = window.localStorage.getItem('efaa_admin_logged_in');
         if (loggedIn === 'true') {
           setAuthState('authenticated');
         }
@@ -572,12 +572,16 @@ export default function AdminSystem() {
   }, []);
 
   const handleLogin = () => {
-    localStorage.setItem('efaa_admin_logged_in', 'true');
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('efaa_admin_logged_in', 'true');
+    }
     setAuthState('authenticated');
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('efaa_admin_logged_in');
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('efaa_admin_logged_in');
+    }
     setAuthState('login');
   };
 
