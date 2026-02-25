@@ -1,7 +1,8 @@
 "use client";
-import { useAlert } from '../context/Alert';
-import { useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+
+import { useAlert } from "../context/Alert";
+import { useCallback } from "react";
+import { useRouter } from "next/navigation";
 
 // Defining a more specific interface for the API response
 interface ApiResponse {
@@ -9,18 +10,19 @@ interface ApiResponse {
   status?: number;
   message?: string;
   token?: string;
-  [key: string]: unknown; // Allows for other dynamic backend data
+  [key: string]: unknown;
 }
 
 interface ApiHook {
   callApi: (
     endpoint: string,
     method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD",
-    body?: unknown // Changed 'any' to 'unknown' to fix ESLint
+    body?: unknown
   ) => Promise<ApiResponse>;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+// Only use NEXT_PUBLIC_ variables in Next.js frontend
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 export const useAPI = (): ApiHook => {
   const router = useRouter();
@@ -32,22 +34,31 @@ export const useAPI = (): ApiHook => {
       method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" = "GET",
       body: unknown = null
     ): Promise<ApiResponse> => {
-      const finalEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+      if (!BASE_URL) {
+        throw new Error("NEXT_PUBLIC_API_URL is not defined");
+      }
 
-      // Check for token in localStorage (safe for Next.js SSR)
-      const token = typeof window !== "undefined" ? localStorage.getItem("efaa_token") : null;
+      // Clean URL joining (prevents double or missing slashes)
+      const cleanBase = BASE_URL.replace(/\/+$/, "");
+      const cleanEndpoint = endpoint.replace(/^\/+/, "");
+      const url = `${cleanBase}/${cleanEndpoint}`;
+
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("efaa_token")
+          : null;
 
       const reqHeaders: HeadersInit = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       };
 
       if (token) {
-        reqHeaders['Authorization'] = `Bearer ${token}`;
+        reqHeaders["Authorization"] = `Bearer ${token}`;
       }
 
       const options: RequestInit = {
         method,
-        headers: reqHeaders
+        headers: reqHeaders,
       };
 
       if (body && method !== "GET" && method !== "HEAD") {
@@ -55,23 +66,28 @@ export const useAPI = (): ApiHook => {
       }
 
       try {
-        const response = await fetch(`${BASE_URL}${finalEndpoint}`, options);
-        console.log(`API Request: ${BASE_URL}${finalEndpoint} - Method: ${method}`);
+        const response = await fetch(url, options);
+        console.log(`API Request: ${url} - Method: ${method}`);
 
-        // Persistent Session: Update token if backend rotates it
-        const newToken = response.headers.get('token');
+        // Update token if backend rotates it
+        const newToken = response.headers.get("token");
         if (newToken) {
-          localStorage.setItem('efaa_token', newToken.replace('Bearer ', ''));
+          localStorage.setItem(
+            "efaa_token",
+            newToken.replace("Bearer ", "")
+          );
         }
 
         const responseData = await response.json();
 
         if (!response.ok) {
-          const errorMessage = responseData.message || responseData.error || "An error occurred";
+          const errorMessage =
+            responseData.message ||
+            responseData.error ||
+            "An error occurred";
 
           if (response.status === 401) {
-            // Only clear and redirect if it's a real session failure, not a registration error
-            if (!finalEndpoint.includes('/authentication')) {
+            if (!url.includes("/authentication")) {
               showAlert("Session expired. Please sign in.", "error");
               localStorage.removeItem("efaa_token");
               router.push("/");
@@ -80,15 +96,26 @@ export const useAPI = (): ApiHook => {
             showAlert(errorMessage, "error");
           }
 
-          return { error: true, status: response.status, message: errorMessage, ...responseData };
+          return {
+            error: true,
+            status: response.status,
+            message: errorMessage,
+            ...responseData,
+          };
         }
 
         return responseData;
-
       } catch (error) {
         console.error("API call error:", error);
-        showAlert("Network connection error. Check your server.", "error");
-        return { error: true, status: 0, message: "Network connection error" };
+        showAlert(
+          "Network connection error. Check your server.",
+          "error"
+        );
+        return {
+          error: true,
+          status: 0,
+          message: "Network connection error",
+        };
       }
     },
     [router, showAlert]

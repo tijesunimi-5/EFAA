@@ -16,11 +16,12 @@ import SButton from '@/components/UI/SButton';
 import Card from '@/components/UI/Card';
 import Header from '@/components/UI/Header';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@/components/context/User';
 
 
 export default function HomeScreen() {
-  const [userName, setUserName] = useState("Friend");
   const router = useRouter()
+  const {user} = useUser()
 
   // Mock health nudge
   const dailyNudge = {
@@ -38,7 +39,7 @@ export default function HomeScreen() {
       {/* --- Welcome Message --- */}
       <section className="px-6 pt-8 pb-6 max-w-2xl mx-auto">
         <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 leading-tight">
-          Stay calm, {userName}.<br />
+          Stay calm, {user?.fullName.split(" ")[0]}.<br />
           <span className="text-slate-500 font-medium text-lg">How can EFAA help you?</span>
         </h1>
       </section>

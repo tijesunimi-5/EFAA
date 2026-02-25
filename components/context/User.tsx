@@ -1,115 +1,112 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import { usePathname, useRouter } from 'next/navigation';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode
+} from 'react';
+
+/**
+ * USER CONTEXT & AUTH GUARD
+ * This context manages the global user state and enforces authentication.
+ * * * NOTE: In your local Next.js project, please uncomment the import below:
+ * import { useRouter, usePathname } from 'next/navigation';
+ */
+
+
 
 interface User {
-  id: string;
   fullName: string;
+  firstName?: string;
   email: string;
   state: string;
 }
 
 interface UserContextType {
   user: User | null;
-  isActive: boolean;
-  onlineTime: number; // in seconds
-  login: (userData: User, token: string) => void;
+  setUser: (user: User | null) => void;
+  isLoading: boolean;
   logout: () => void;
-  initialLoadComplete: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isActive, setIsActive] = useState(false);
-  const [onlineTime, setOnlineTime] = useState(0);
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [user, setUserState] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
 
-  // Load from localStorage **only on client** after mount
+  // Define paths that DON'T require a token
+  const publicPaths = ['/onboarding', '/login', '/'];
+
   useEffect(() => {
-    // Skip on server
-    if (typeof window === "undefined") return;
+    const checkAuth = () => {
+      if (typeof window === 'undefined') return;
 
-    try {
-      const storedUser = localStorage.getItem("efaa_user");
-      const token = localStorage.getItem("efaa_token");
+      const token = localStorage.getItem('efaa_token');
+      const savedUser = localStorage.getItem('efaa_user');
 
-      if (storedUser && token) {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        setIsActive(true);
+      // 1. If we have a token, restore the user state
+      if (token && savedUser) {
+        try {
+          setUserState(JSON.parse(savedUser));
+        } catch (e) {
+          console.error("Failed to parse user data", e);
+        }
       }
-    } catch (err) {
-      console.error("Failed to parse stored user:", err);
-      // Optional: clear bad data
-      localStorage.removeItem("efaa_user");
-      localStorage.removeItem("efaa_token");
-    } finally {
-      setInitialLoadComplete(true);
-    }
-  }, []); // runs once on client mount
 
-  // Online timer – only if user is logged in
-  useEffect(() => {
-    if (!user) return;
+      // 2. Redirect Logic: If no token and trying to access a private route
+      else if (!token && !publicPaths.includes(pathname)) {
+        // Only redirect if we are not already on a public page
+        router.push('/onboarding');
+      }
 
-    const interval = setInterval(() => {
-      setOnlineTime((prev) => prev + 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [user]);
-
-  // WebSocket pulse – only if user exists
-  useEffect(() => {
-    if (!user) return;
-
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://efaa-backend.onrender.com";
-    const ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ type: "IDENTIFY", userId: user.id }));
+      setIsLoading(false);
     };
 
-    // Optional: handle close/error if needed
-    ws.onclose = () => console.log("WebSocket closed");
-    ws.onerror = (err) => console.error("WebSocket error:", err);
+    checkAuth();
+  }, [pathname]);
 
-    return () => ws.close();
-  }, [user]);
+  // Sync user state to localStorage whenever it changes
+  const setUser = (newUser: User | null) => {
+    setUserState(newUser);
+    if (typeof window === 'undefined') return;
 
-  const login = useCallback((userData: User, token: string) => {
-    if (typeof window === "undefined") return;
+    if (newUser) {
+      localStorage.setItem('efaa_user', JSON.stringify(newUser));
+    } else {
+      localStorage.removeItem('efaa_user');
+      localStorage.removeItem('efaa_token');
+    }
+  };
 
-    localStorage.setItem("efaa_user", JSON.stringify(userData));
-    localStorage.setItem("efaa_token", token);
-    setUser(userData);
-    setIsActive(true);
-    setOnlineTime(0);
-  }, []);
-
-  const logout = useCallback(() => {
-    if (typeof window === "undefined") return;
-
-    localStorage.removeItem("efaa_user");
-    localStorage.removeItem("efaa_token");
+  const logout = () => {
     setUser(null);
-    setIsActive(false);
-    setOnlineTime(0);
-  }, []);
+    router.push('/login');
+  };
 
   return (
-    <UserContext.Provider
-      value={{ user, isActive, onlineTime, login, logout, initialLoadComplete }}
-    >
-      {children}
+    <UserContext.Provider value={{ user, setUser, isLoading, logout }}>
+      {/* Optional: Only show content after loading to prevent 
+        flashing private content before the redirect kicks in.
+      */}
+      {!isLoading || publicPaths.includes(pathname) ? children : (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-teal-700 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
     </UserContext.Provider>
   );
 };
 
 export const useUser = () => {
   const context = useContext(UserContext);
-  if (!context) throw new Error("useUser must be used within UserProvider");
+  if (context === undefined) {
+    throw new Error('useUser must be used within a UserProvider');
+  }
   return context;
 };

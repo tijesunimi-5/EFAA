@@ -12,6 +12,7 @@ import Layout from '@/components/UI/Layout';
 // Hooks and Context
 import { useAPI } from '@/components/hook/callApi';
 import { useAlert } from '@/components/context/Alert'; // Ensure path is correct
+import { useUser } from '@/components/context/User';
 
 /**
  * TYPES & INTERFACES
@@ -33,6 +34,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { callApi } = useAPI();
   const { showAlert } = useAlert();
+  const {setUser} = useUser()
 
   const [step, setStep] = useState<Step>(1);
   const [isLocating, setIsLocating] = useState(false);
@@ -80,6 +82,7 @@ export default function OnboardingPage() {
       }
 
       showAlert("Registration successful! Your device is now recognized.", "success");
+      setUser(formData)
       setStep('complete');
     } else {
       // callApi already showed the error alert, so we just stop here
