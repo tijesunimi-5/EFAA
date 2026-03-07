@@ -1,22 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from 'next/navigation';
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode
-} from 'react';
-
-/**
- * USER CONTEXT & AUTH GUARD
- * This context manages the global user state and enforces authentication.
- * * * NOTE: In your local Next.js project, please uncomment the import below:
- * import { useRouter, usePathname } from 'next/navigation';
- */
-
-
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface User {
   fullName: string;
@@ -40,8 +25,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Define paths that DON'T require a token
-  const publicPaths = ['/onboarding', '/login', '/'];
+  const publicPaths = ['/onboarding', '/onboarding/login', '/login', '/'];
 
   useEffect(() => {
     const checkAuth = () => {
@@ -49,8 +33,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
       const token = localStorage.getItem('efaa_token');
       const savedUser = localStorage.getItem('efaa_user');
+      const hasAccountHint = localStorage.getItem('efaa_has_account'); // The hint
 
-      // 1. If we have a token, restore the user state
       if (token && savedUser) {
         try {
           setUserState(JSON.parse(savedUser));
@@ -58,42 +42,45 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           console.error("Failed to parse user data", e);
         }
       }
-
-      // 2. Redirect Logic: If no token and trying to access a private route
+      // Redirect Logic for private routes
+      // Inside UserProvider useEffect:
       else if (!token && !publicPaths.includes(pathname)) {
-        // Only redirect if we are not already on a public page
-        router.push('/onboarding');
+        const hasAccountHint = localStorage.getItem('efaa_has_account');
+
+        if (hasAccountHint === 'true') {
+          router.push('/onboarding/login'); // They have an account, just need to re-identify
+        } else {
+          router.push('/onboarding'); // Brand new user
+        }
       }
 
       setIsLoading(false);
     };
 
     checkAuth();
-  }, [pathname]);
+  }, [pathname, router]);
 
-  // Sync user state to localStorage whenever it changes
   const setUser = (newUser: User | null) => {
     setUserState(newUser);
     if (typeof window === 'undefined') return;
 
     if (newUser) {
       localStorage.setItem('efaa_user', JSON.stringify(newUser));
+      localStorage.setItem('efaa_has_account', 'true'); // Set the hint here
     } else {
       localStorage.removeItem('efaa_user');
       localStorage.removeItem('efaa_token');
+      // Note: We do NOT remove efaa_has_account on logout
     }
   };
 
   const logout = () => {
     setUser(null);
-    router.push('/login');
+    router.push('/onboarding/login');
   };
 
   return (
     <UserContext.Provider value={{ user, setUser, isLoading, logout }}>
-      {/* Optional: Only show content after loading to prevent 
-        flashing private content before the redirect kicks in.
-      */}
       {!isLoading || publicPaths.includes(pathname) ? children : (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-teal-700 border-t-transparent rounded-full animate-spin" />
@@ -105,8 +92,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
 export const useUser = () => {
   const context = useContext(UserContext);
-  if (context === undefined) {
-    throw new Error('useUser must be used within a UserProvider');
-  }
+  if (context === undefined) throw new Error('useUser must be used within a UserProvider');
   return context;
 };

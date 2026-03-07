@@ -11,57 +11,49 @@ import {
   ShieldCheck,
   AlertCircle
 } from 'lucide-react';
+import { useAPI } from '@/components/hook/callApi';
+import { useRouter } from 'next/navigation'; // Use the real router
 
 /**
  * USER LOGIN PAGE
  * A clean, focused login experience for EFAA responders.
- * Features:
- * 1. Email & Password validation.
- * 2. Password visibility toggle.
- * 3. Error state handling.
- * 4. Integration ready for backend auth.
  */
-
-// Internal navigation simulation to satisfy environment constraints
-// In your local Next.js project, you would use: import { useRouter } from 'next/navigation';
-const useRouter = () => ({
-  push: (path: string) => {
-    console.log(`Navigating to: ${path}`);
-    // Simulated redirect
-  }
-});
 
 export default function App() {
   const router = useRouter();
-
+  const { callApi } = useAPI();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Inside handleLogin function
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
     try {
-      // Simulating network delay for backend integration demo
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await callApi('/login', 'POST', { email, password });
 
-      // Success condition demo
-      if (email === "user@example.com" && password === "password123") {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('efaa_token', 'dummy_user_token');
-        }
+      if (result.success && result.token) {
+        // 1. First, update localStorage explicitly
+        localStorage.setItem('efaa_token', result.token);
+        localStorage.setItem('efaa_user', JSON.stringify(result.user));
+        localStorage.setItem('efaa_has_account', 'true');
 
-        // Navigation triggered
-        router.push('/dashboard');
+        // 2. Brief delay to ensure storage is committed before navigation
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 100);
+
       } else {
-        setError("Invalid email or password. Please try again.");
+        setError(result.message || "Invalid email or password.");
       }
     } catch (err) {
-      setError("Unable to connect to the server. Check your connection.");
+      console.error("Login error:", err);
+      setError("Connection failed. Please check your internet.");
     } finally {
       setIsLoading(false);
     }
@@ -158,7 +150,7 @@ export default function App() {
             <p className="text-slate-500 font-medium text-sm">
               Don&apos;t have an account? <br className="sm:hidden" />
               <button
-                onClick={() => router.push('/register')}
+                onClick={() => router.push('/onboarding?step=1')}
                 className="text-teal-700 font-black uppercase tracking-tight ml-1 hover:underline"
               >
                 Join Community
@@ -172,7 +164,6 @@ export default function App() {
           <ShieldCheck className="w-4 h-4" /> Secure Responder Access
         </div>
       </div>
-
     </div>
   );
 }

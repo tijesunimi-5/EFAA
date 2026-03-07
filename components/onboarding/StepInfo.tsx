@@ -1,14 +1,14 @@
 "use client";
 
-import React, { ReactNode, InputHTMLAttributes, SelectHTMLAttributes } from "react";
-import { Mail, Phone, User, Info, Globe, ChevronRight } from "lucide-react";
+import React, { useState, InputHTMLAttributes, SelectHTMLAttributes } from "react";
+import { Mail, Phone, User, Info, Globe, Lock, Eye, EyeOff, ChevronDown } from "lucide-react";
 
 /**
  * TYPES & INTERFACES
  */
-
 export interface FormData {
   fullName: string;
+  password: string;
   email: string;
   phone: string;
   state: string;
@@ -23,7 +23,6 @@ interface StepInfoProps {
 
 /**
  * INTERNAL UI COMPONENTS
- * Consolidated for portability and to ensure zero-config compilation.
  */
 
 const ProgressIndicator = ({ currentStep }: { currentStep: number }) => (
@@ -38,7 +37,7 @@ const ProgressIndicator = ({ currentStep }: { currentStep: number }) => (
   </div>
 );
 
-const Card = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
+const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
   <div className={`bg-white rounded-3xl p-8 shadow-sm border border-slate-100 ${className}`}>
     {children}
   </div>
@@ -46,7 +45,7 @@ const Card = ({ children, className = "" }: { children: ReactNode; className?: s
 
 interface InputFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  icon: ReactNode;
+  icon: React.ReactNode;
 }
 
 const InputField = ({ label, icon, ...props }: InputFieldProps) => (
@@ -68,7 +67,7 @@ const InputField = ({ label, icon, ...props }: InputFieldProps) => (
 
 interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label: string;
-  icon: ReactNode;
+  icon: React.ReactNode;
   options: { value: string; label: string }[];
 }
 
@@ -95,7 +94,7 @@ const SelectField = ({ label, icon, options, ...props }: SelectFieldProps) => (
         ))}
       </select>
       <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-        <ChevronRight className="w-4 h-4 rotate-90" />
+        <ChevronDown className="w-4 h-4" />
       </div>
     </div>
   </div>
@@ -107,7 +106,7 @@ const SButton = ({
   className = "",
   ...props
 }: {
-  children: ReactNode;
+  children: React.ReactNode;
   variant?: "primary" | "secondary" | "ghost";
   className?: string;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) => {
@@ -129,10 +128,10 @@ const SButton = ({
 
 /**
  * STEP INFO COMPONENT
- * Gathering profile data and region to personalize the emergency response.
  */
-
 const StepInfo = ({ formData, setFormData, nextStep }: StepInfoProps) => {
+  const [showPassword, setShowPassword] = useState(false);
+
   const countries = [
     { value: "nigeria", label: "Nigeria" },
     { value: "ghana", label: "Ghana" },
@@ -142,7 +141,11 @@ const StepInfo = ({ formData, setFormData, nextStep }: StepInfoProps) => {
     { value: "other", label: "Other" },
   ];
 
-  const isValid = formData.fullName.trim() !== "" && formData.country !== "";
+  const isValid =
+    formData.fullName.trim() !== "" &&
+    formData.country !== "" &&
+    formData.email.includes("@") &&
+    formData.password.length >= 6;
 
   return (
     <div className="animate-in fade-in slide-in-from-right-4 duration-500">
@@ -159,7 +162,10 @@ const StepInfo = ({ formData, setFormData, nextStep }: StepInfoProps) => {
           placeholder="e.g. Chidi Benson"
           icon={<User className="w-5 h-5" />}
           value={formData.fullName}
-          onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setFormData({ ...formData, fullName: e.target.value })
+          }
+          required
         />
 
         <SelectField
@@ -167,17 +173,43 @@ const StepInfo = ({ formData, setFormData, nextStep }: StepInfoProps) => {
           icon={<Globe className="w-5 h-5" />}
           options={countries}
           value={formData.country}
-          onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+            setFormData({ ...formData, country: e.target.value })
+          }
         />
 
         <InputField
-          label="Email Address (Optional)"
+          label="Email Address"
           type="email"
           placeholder="email@example.com"
           icon={<Mail className="w-5 h-5" />}
           value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setFormData({ ...formData, email: e.target.value })
+          }
+          required
         />
+
+        <div className="relative">
+          <InputField
+            label="Create Password"
+            type={showPassword ? "text" : "password"}
+            placeholder="Min. 6 characters"
+            icon={<Lock className="w-5 h-5" />}
+            value={formData.password}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setFormData({ ...formData, password: e.target.value })
+            }
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-4 top-9.5 text-slate-400 hover:text-teal-600 transition-colors"
+          >
+            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+          </button>
+        </div>
 
         <InputField
           label="Phone Number (Optional)"
@@ -185,7 +217,9 @@ const StepInfo = ({ formData, setFormData, nextStep }: StepInfoProps) => {
           placeholder="+234..."
           icon={<Phone className="w-5 h-5" />}
           value={formData.phone}
-          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setFormData({ ...formData, phone: e.target.value })
+          }
         />
 
         <div className="flex gap-2 mt-2 text-xs text-slate-400 leading-tight bg-slate-50 p-3 rounded-xl">

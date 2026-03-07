@@ -43,6 +43,7 @@ export const useAPI = (): ApiHook => {
       const cleanEndpoint = endpoint.replace(/^\/+/, "");
       const url = `${cleanBase}/${cleanEndpoint}`;
 
+      console.log(`Base-URL ${BASE_URL} - Clean Base ${cleanBase} - Clean Endpoint ${cleanEndpoint} - URL ${url}`)
       const token =
         typeof window !== "undefined"
           ? localStorage.getItem("efaa_token")

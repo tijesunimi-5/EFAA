@@ -22,12 +22,29 @@ export type Step = 1 | 2 | 3 | 'complete';
 export interface FormData {
   fullName: string;
   email: string;
+  password: string;
   phone: string;
   state: string;
   country: string;
   // Add these for the database
   latitude?: number;
   longitude?: number;
+}
+
+export interface User extends FormData {
+  id?: string;
+  token?: string;
+}
+
+export interface ApiResponse {
+  success: boolean;
+  token?: string;
+  user: {
+    fullName: string;
+    email: string;
+    state: string;
+  };
+  error?: string;
 }
 
 export default function OnboardingPage() {
@@ -42,6 +59,7 @@ export default function OnboardingPage() {
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
+    password: '',
     phone: '',
     state: '',
     country: 'Nigeria'
@@ -64,29 +82,37 @@ export default function OnboardingPage() {
    * Sends data to Node.js backend POST /users
    * Updated to receive direct lat/long to avoid React state delay
    */
-  const handleRegistration = async (lat?: number, long?: number) => {
-    // Combine current form data with direct coordinates to ensure they aren't empty
-    const finalData = {
-      ...formData,
-      latitude: lat ?? formData.latitude,
-      longitude: long ?? formData.longitude
-    };
+  const handleRegistration = async (lat?: number, lng?: number) => {
+    try {
+      const finalData = {
+        ...formData,
+        latitude: lat || formData.latitude,
+        longitude: lng || formData.longitude,
+      };
 
-    // 1. Correct the endpoint to match your backend route
-    const result = await callApi("/authentication/users", "POST", finalData);
+      const result = await callApi('/authentication/users', 'POST', finalData) as unknown as ApiResponse;
 
-    if (!result.error) {
-      // 2. The backend sends { token, user }. We store the token for long-term persistence.
-      if (result.token) {
-        localStorage.setItem("efaa_token", result.token);
+      if (result.success) {
+        localStorage.setItem('efaa_has_account', 'true');
+        localStorage.setItem('efaa_token', String(result.token));
+
+        // Ensure the fields match your User interface (fullName, email, state)
+        setUser({
+          fullName: result.user.fullName,
+          email: result.user.email || formData.email, // Fallback to form data if backend missed it
+          state: result.user.state
+        });
+
+        showAlert("Profile created successfully!", "success");
+        setStep('complete');
+      } else {
+        console.log(result)
+        const errorMessage = typeof result.error === 'string' ? result.error : "Failed to create profile";
+        showAlert(errorMessage, "error");
       }
-
-      showAlert("Registration successful! Your device is now recognized.", "success");
-      setUser(formData)
-      setStep('complete');
-    } else {
-      // callApi already showed the error alert, so we just stop here
-      console.log("Registration failed", result.message);
+    } catch (err) {
+      console.error("Registration error:", err);
+      showAlert("Network error. Please try again.", "error");
     }
   };
 
