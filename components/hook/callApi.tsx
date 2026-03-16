@@ -4,9 +4,10 @@ import { useAlert } from "../context/Alert";
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 
-// Defining a more specific interface for the API response
+// Updated Interface to support Generics
 interface ApiResponse {
   error?: boolean;
+  success?: boolean; // Added for easier logic checks
   status?: number;
   message?: string;
   token?: string;
@@ -14,14 +15,14 @@ interface ApiResponse {
 }
 
 interface ApiHook {
-  callApi: (
+  // Added <T> to allow passing custom response types
+  callApi: <T = ApiResponse>(
     endpoint: string,
     method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD",
     body?: unknown
-  ) => Promise<ApiResponse>;
+  ) => Promise<T & ApiResponse>;
 }
 
-// Only use NEXT_PUBLIC_ variables in Next.js frontend
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 export const useAPI = (): ApiHook => {
@@ -29,25 +30,21 @@ export const useAPI = (): ApiHook => {
   const { showAlert } = useAlert();
 
   const callApi = useCallback(
-    async (
+    async <T = ApiResponse,>(
       endpoint: string,
       method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" = "GET",
       body: unknown = null
-    ): Promise<ApiResponse> => {
+    ): Promise<T & ApiResponse> => {
       if (!BASE_URL) {
         throw new Error("NEXT_PUBLIC_API_URL is not defined");
       }
 
-      // Clean URL joining (prevents double or missing slashes)
       const cleanBase = BASE_URL.replace(/\/+$/, "");
       const cleanEndpoint = endpoint.replace(/^\/+/, "");
       const url = `${cleanBase}/${cleanEndpoint}`;
+      console.log(`Clean Base ${cleanBase} - Clean Endpoint ${cleanEndpoint} - Url ${url}`)
 
-      console.log(`Base-URL ${BASE_URL} - Clean Base ${cleanBase} - Clean Endpoint ${cleanEndpoint} - URL ${url}`)
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("efaa_token")
-          : null;
+      const token = typeof window !== "undefined" ? localStorage.getItem("efaa_token") : null;
 
       const reqHeaders: HeadersInit = {
         "Content-Type": "application/json",
@@ -68,24 +65,23 @@ export const useAPI = (): ApiHook => {
 
       try {
         const response = await fetch(url, options);
-        console.log(`API Request: ${url} - Method: ${method}`);
 
-        // Update token if backend rotates it
         const newToken = response.headers.get("token");
         if (newToken) {
-          localStorage.setItem(
-            "efaa_token",
-            newToken.replace("Bearer ", "")
-          );
+          localStorage.setItem("efaa_token", newToken.replace("Bearer ", ""));
         }
 
         const responseData = await response.json();
 
+        // Standardize the success/error property
+        const result = {
+          ...responseData,
+          success: response.ok, // If HTTP 200-299, success is true
+          status: response.status,
+        };
+
         if (!response.ok) {
-          const errorMessage =
-            responseData.message ||
-            responseData.error ||
-            "An error occurred";
+          const errorMessage = result.message || result.error || "An error occurred";
 
           if (response.status === 401) {
             if (!url.includes("/authentication")) {
@@ -97,26 +93,19 @@ export const useAPI = (): ApiHook => {
             showAlert(errorMessage, "error");
           }
 
-          return {
-            error: true,
-            status: response.status,
-            message: errorMessage,
-            ...responseData,
-          };
+          return { ...result, error: true, message: errorMessage } as T & ApiResponse;
         }
 
-        return responseData;
+        return result as T & ApiResponse;
       } catch (error) {
         console.error("API call error:", error);
-        showAlert(
-          "Network connection error. Check your server.",
-          "error"
-        );
+        showAlert("Network connection error. Check your server.", "error");
         return {
           error: true,
+          success: false,
           status: 0,
           message: "Network connection error",
-        };
+        } as T & ApiResponse;
       }
     },
     [router, showAlert]

@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-interface User {
+export interface User {
   fullName: string;
   firstName?: string;
   email: string;
