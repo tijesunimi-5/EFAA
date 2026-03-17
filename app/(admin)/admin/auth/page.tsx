@@ -70,7 +70,7 @@ export default function AdminAuth() {
           state: result.user.state || 'Federal'
         });
 
-        router.push('/admin/dashboard');
+        router.push('/admin/users');
       } else {
         setError(result.message || "Authentication failed.");
       }

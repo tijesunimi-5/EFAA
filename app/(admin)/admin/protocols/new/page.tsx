@@ -58,7 +58,7 @@ export default function ProtocolCreator() {
 
   return (
     <div className="max-w-4xl mx-auto pb-20">
-      <div className="fixed top-0 z-40 bg-slate-50/80 backdrop-blur-md pt-4 pb-6 border-b border-slate-200 mb-10 px-4 -mx-4">
+      <div className="fixed md:left-72 md:right-5 top-0 z-40 bg-slate-50/80 backdrop-blur-md pt-4 pb-6 border-b border-slate-200 mb-10 px-4 -mx-4">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-black text-slate-900 leading-tight">Emergency Guide</h1>

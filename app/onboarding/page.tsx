@@ -128,7 +128,7 @@ export default function OnboardingPage() {
   };
 
   const handleReset = () => {
-    router.push('/dashboard');
+    router.push('/home');
   };
 
   const handleLocationRequest = () => {

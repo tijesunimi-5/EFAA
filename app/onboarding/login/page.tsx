@@ -45,7 +45,7 @@ export default function App() {
 
         // 2. Brief delay to ensure storage is committed before navigation
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push('/home');
         }, 100);
 
       } else {
