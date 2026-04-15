@@ -11,8 +11,8 @@ import Layout from '@/components/UI/Layout';
 
 // Hooks and Context
 import { useAPI } from '@/components/hook/callApi';
-import { useAlert } from '@/components/context/Alert'; // Ensure path is correct
-import { useUser } from '@/components/context/User';
+import { useAlert } from '@/components/context/Alert';
+import { useUser, UserRole } from '@/components/context/User';
 
 /**
  * TYPES & INTERFACES
@@ -26,14 +26,8 @@ export interface FormData {
   phone: string;
   state: string;
   country: string;
-  // Add these for the database
   latitude?: number;
   longitude?: number;
-}
-
-export interface User extends FormData {
-  id?: string;
-  token?: string;
 }
 
 export interface ApiResponse {
@@ -43,6 +37,7 @@ export interface ApiResponse {
     fullName: string;
     email: string;
     state: string;
+    role: UserRole; // Added to match refactored context
   };
   error?: string;
 }
@@ -51,7 +46,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { callApi } = useAPI();
   const { showAlert } = useAlert();
-  const {setUser} = useUser()
+  const { setUser } = useUser(); // Access global user state
 
   const [step, setStep] = useState<Step>(1);
   const [isLocating, setIsLocating] = useState(false);
@@ -66,21 +61,19 @@ export default function OnboardingPage() {
   });
 
   /**
-   * SESSION PERSISTENCE LOGIC
-   * Checks if the user is already recognized by the browser
+   * SESSION PERSISTENCE
+   * If a token exists, we skip onboarding entirely.
    */
   useEffect(() => {
     const token = localStorage.getItem("efaa_token");
     if (token) {
-      // If user is already registered, take them straight to dashboard
-      router.push('/dashboard');
+      router.push('/home'); // Redirect to new professional hub
     }
   }, [router]);
 
   /**
    * REGISTRATION LOGIC
-   * Sends data to Node.js backend POST /users
-   * Updated to receive direct lat/long to avoid React state delay
+   * Finalizes the account and logs the user in immediately.
    */
   const handleRegistration = async (lat?: number, lng?: number) => {
     try {
@@ -88,25 +81,27 @@ export default function OnboardingPage() {
         ...formData,
         latitude: lat || formData.latitude,
         longitude: lng || formData.longitude,
+        role: 'user' // Default role for new responders
       };
 
       const result = await callApi('/authentication/users', 'POST', finalData) as unknown as ApiResponse;
 
-      if (result.success) {
-        localStorage.setItem('efaa_has_account', 'true');
+      if (result.success && result.token) {
+        // 1. Set Auth Token
         localStorage.setItem('efaa_token', String(result.token));
 
-        // Ensure the fields match your User interface (fullName, email, state)
+        // 2. Hydrate Global User State
+        // This ensures the "Header" and "WelcomeHeader" update immediately
         setUser({
           fullName: result.user.fullName,
-          email: result.user.email || formData.email, // Fallback to form data if backend missed it
-          state: result.user.state
+          email: result.user.email,
+          state: result.user.state,
+          role: result.user.role || 'user'
         });
 
         showAlert("Profile created successfully!", "success");
         setStep('complete');
       } else {
-        console.log(result)
         const errorMessage = typeof result.error === 'string' ? result.error : "Failed to create profile";
         showAlert(errorMessage, "error");
       }
@@ -119,7 +114,6 @@ export default function OnboardingPage() {
   const nextStep = () => {
     if (step === 1) setStep(2);
     else if (step === 2) setStep(3);
-    // Note: Step 3 (Location) handles its own registration trigger now
   };
 
   const prevStep = () => {
@@ -127,7 +121,7 @@ export default function OnboardingPage() {
     else if (step === 3) setStep(2);
   };
 
-  const handleReset = () => {
+  const handleFinish = () => {
     router.push('/home');
   };
 
@@ -135,34 +129,24 @@ export default function OnboardingPage() {
     setIsLocating(true);
 
     if (!navigator.geolocation) {
-      showAlert("Geolocation is not supported", "error");
+      showAlert("Location services unavailable", "error");
       setIsLocating(false);
-      handleRegistration(); // Register with empty location if not supported
+      handleRegistration();
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-
-        // Save into state for UI consistency
-        setFormData(prev => ({
-          ...prev,
-          latitude,
-          longitude
-        }));
-
+        setFormData(prev => ({ ...prev, latitude, longitude }));
         setIsLocating(false);
-        showAlert("Location captured successfully!", "success");
-
-        // Pass coordinates DIRECTLY to avoid waiting for React state update
+        showAlert("Location verified", "success");
         handleRegistration(latitude, longitude);
       },
       (error) => {
         setIsLocating(false);
-        showAlert("Location denied. You can still use EFAA manually.", "info");
-        console.log("An error occured:", error);
-        handleRegistration(); // Register even if location is denied
+        showAlert("Location denied. Proceeding with default settings.", "info");
+        handleRegistration();
       }
     );
   };
@@ -172,25 +156,27 @@ export default function OnboardingPage() {
       onBack={step !== 1 && step !== 'complete' ? prevStep : undefined}
       currentStep={step === 'complete' ? 3 : step}
     >
-      {step === 1 && <StepWelcome onNext={nextStep} />}
+      <div className="max-w-md mx-auto w-full px-4 py-8">
+        {step === 1 && <StepWelcome onNext={nextStep} />}
 
-      {step === 2 && (
-        <StepInfo
-          formData={formData}
-          setFormData={setFormData}
-          nextStep={nextStep}
-        />
-      )}
+        {step === 2 && (
+          <StepInfo
+            formData={formData}
+            setFormData={setFormData}
+            nextStep={nextStep}
+          />
+        )}
 
-      {step === 3 && (
-        <StepLocation
-          handleLocationRequest={handleLocationRequest}
-          isLocating={isLocating}
-          nextStep={nextStep}
-        />
-      )}
+        {step === 3 && (
+          <StepLocation
+            handleLocationRequest={handleLocationRequest}
+            isLocating={isLocating}
+            nextStep={nextStep}
+          />
+        )}
 
-      {step === 'complete' && <SuccessScreen onReset={handleReset} />}
+        {step === 'complete' && <SuccessScreen onReset={handleFinish} />}
+      </div>
     </Layout>
   );
 }

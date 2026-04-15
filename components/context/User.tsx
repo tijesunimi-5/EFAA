@@ -3,11 +3,15 @@
 import { usePathname, useRouter } from 'next/navigation';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+// Define clear roles for scalability
+export type UserRole = 'user' | 'admin';
+
 export interface User {
   fullName: string;
   firstName?: string;
   email: string;
   state: string;
+  role: UserRole; // Added for RBAC
 }
 
 interface UserContextType {
@@ -15,6 +19,7 @@ interface UserContextType {
   setUser: (user: User | null) => void;
   isLoading: boolean;
   logout: () => void;
+  isAdmin: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -25,7 +30,27 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Define route sets for cleaner logic
   const publicPaths = ['/onboarding', '/onboarding/login', '/login', '/'];
+  const adminPaths = ['/admin'];
+
+  const setUser = (newUser: User | null) => {
+    setUserState(newUser);
+    if (typeof window === 'undefined') return;
+
+    if (newUser) {
+      localStorage.setItem('efaa_user', JSON.stringify(newUser));
+      localStorage.setItem('efaa_has_account', 'true');
+    } else {
+      localStorage.removeItem('efaa_user');
+      localStorage.removeItem('efaa_token');
+    }
+  };
+
+  const logout = () => {
+    setUser(null);
+    router.push('/onboarding/login');
+  };
 
   useEffect(() => {
     const checkAuth = () => {
@@ -33,24 +58,29 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
       const token = localStorage.getItem('efaa_token');
       const savedUser = localStorage.getItem('efaa_user');
-      const hasAccountHint = localStorage.getItem('efaa_has_account'); // The hint
 
       if (token && savedUser) {
         try {
-          setUserState(JSON.parse(savedUser));
+          const parsedUser: User = JSON.parse(savedUser);
+          setUserState(parsedUser);
+
+          // Role-based protection: Prevent users from accessing admin routes
+          if (parsedUser.role !== 'admin' && pathname.startsWith('/admin')) {
+            router.push('/home');
+          }
         } catch (e) {
-          console.error("Failed to parse user data", e);
+          console.error("Auth hydration failed:", e);
+          logout();
         }
       }
-      // Redirect Logic for private routes
-      // Inside UserProvider useEffect:
       else if (!token && !publicPaths.includes(pathname)) {
         const hasAccountHint = localStorage.getItem('efaa_has_account');
 
+        // Redirect logic based on history
         if (hasAccountHint === 'true') {
-          router.push('/onboarding/login'); // They have an account, just need to re-identify
+          router.push('/onboarding/login');
         } else {
-          router.push('/onboarding'); // Brand new user
+          router.push('/onboarding');
         }
       }
 
@@ -60,30 +90,27 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     checkAuth();
   }, [pathname, router]);
 
-  const setUser = (newUser: User | null) => {
-    setUserState(newUser);
-    if (typeof window === 'undefined') return;
+ 
 
-    if (newUser) {
-      localStorage.setItem('efaa_user', JSON.stringify(newUser));
-      localStorage.setItem('efaa_has_account', 'true'); // Set the hint here
-    } else {
-      localStorage.removeItem('efaa_user');
-      localStorage.removeItem('efaa_token');
-      // Note: We do NOT remove efaa_has_account on logout
-    }
-  };
+  
 
-  const logout = () => {
-    setUser(null);
-    router.push('/onboarding/login');
+  const value = {
+    user,
+    setUser,
+    isLoading,
+    logout,
+    isAdmin: user?.role === 'admin'
   };
 
   return (
-    <UserContext.Provider value={{ user, setUser, isLoading, logout }}>
+    <UserContext.Provider value={value}>
+      {/* Show loader only on private routes while validating. 
+         Public paths should be "instant" for SEO and speed.
+      */}
       {!isLoading || publicPaths.includes(pathname) ? children : (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-          <div className="w-8 h-8 border-4 border-teal-700 border-t-transparent rounded-full animate-spin" />
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
+          <div className="w-10 h-10 border-4 border-teal-700 border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-500 font-medium text-sm animate-pulse">Securing session...</p>
         </div>
       )}
     </UserContext.Provider>

@@ -12,41 +12,54 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useAPI } from '@/components/hook/callApi';
-import { useRouter } from 'next/navigation'; // Use the real router
+import { useRouter } from 'next/navigation';
+import { UserRole, useUser } from '@/components/context/User'; // Import our new hook
 
-/**
- * USER LOGIN PAGE
- * A clean, focused login experience for EFAA responders.
- */
+interface LoginResponse {
+  success: boolean;
+  token?: string;
+  message?: string;
+  user: {
+    fullName: string;
+    email: string;
+    state: string;
+    role: UserRole; // This ensures TypeScript knows 'role' exists
+  };
+}
 
-export default function App() {
+export default function LoginPage() {
   const router = useRouter();
   const { callApi } = useAPI();
+  const { setUser } = useUser(); // Access the global setter
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Inside handleLogin function
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
     try {
-      const result = await callApi('/login', 'POST', { email, password });
+      // result should return { success, token, user: { ..., role: 'user' | 'admin' } }
+      const result = await callApi('/login', 'POST', { email, password }) as unknown as LoginResponse;
 
       if (result.success && result.token) {
-        // 1. First, update localStorage explicitly
+        // 1. Update Global State & LocalStorage via the Provider
+        // This automatically sets efaa_token and efaa_user
+        setUser(result?.user);
         localStorage.setItem('efaa_token', result.token);
-        localStorage.setItem('efaa_user', JSON.stringify(result.user));
-        localStorage.setItem('efaa_has_account', 'true');
 
-        // 2. Brief delay to ensure storage is committed before navigation
-        setTimeout(() => {
+        // 2. Role-Based Navigation
+        // Ensure the backend sends the 'role' field in the user object
+        if (result?.user?.role === 'admin') {
+          router.push('/admin/dashboard');
+        } else {
           router.push('/home');
-        }, 100);
+        }
 
       } else {
         setError(result.message || "Invalid email or password.");
@@ -61,7 +74,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 font-sans text-slate-900">
-
       {/* Brand Header */}
       <div className="mb-10 text-center animate-in fade-in slide-in-from-top-4 duration-700">
         <div className="bg-teal-700 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-teal-100">
@@ -73,7 +85,6 @@ export default function App() {
 
       <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-500">
         <div className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-2xl shadow-slate-200/60 border border-slate-100">
-
           <div className="mb-8 text-center sm:text-left">
             <h2 className="text-2xl font-bold text-slate-800">Welcome Back</h2>
             <p className="text-slate-400 text-sm font-medium">Please sign in to access your dashboard.</p>
@@ -87,7 +98,6 @@ export default function App() {
           )}
 
           <form onSubmit={handleLogin} className="space-y-5">
-            {/* Email Field */}
             <div className="space-y-1.5">
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
               <div className="relative group">
@@ -105,7 +115,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Password Field */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center px-1">
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Password</label>
@@ -150,7 +159,7 @@ export default function App() {
             <p className="text-slate-500 font-medium text-sm">
               Don&apos;t have an account? <br className="sm:hidden" />
               <button
-                onClick={() => router.push('/onboarding?step=1')}
+                onClick={() => router.push('/onboarding')}
                 className="text-teal-700 font-black uppercase tracking-tight ml-1 hover:underline"
               >
                 Join Community
@@ -159,7 +168,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Trust Badge */}
         <div className="mt-8 flex items-center justify-center gap-2 text-slate-300 font-bold text-[10px] uppercase tracking-[0.2em]">
           <ShieldCheck className="w-4 h-4" /> Secure Responder Access
         </div>

@@ -11,7 +11,6 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       <main className="max-w-2xl mx-auto">
         {children}
       </main>
-      <MobileNav />
     </div>
   );
 }
