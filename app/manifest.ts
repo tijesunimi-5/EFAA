@@ -8,17 +8,19 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/home",
     display: "standalone",
     background_color: "#ffffff",
-    theme_color: "#0f766e", // Your teal-700 color
+    theme_color: "#0f766e",
     icons: [
       {
-        src: "/icon-192x192.png",
-        sizes: "192x192",
-        type: "image/png",
+        src: "/logo.svg",
+        sizes: "any", // SVGs are infinitely scalable
+        type: "image/svg+xml",
+        purpose: "any",
       },
       {
-        src: "/icon-512x512.png",
+        src: "/logo.svg",
         sizes: "512x512",
-        type: "image/png",
+        type: "image/svg+xml",
+        purpose: "maskable",
       },
     ],
   };
