@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Activity, Menu, Search, Users, X,
+  Activity, Menu, Search, Users, X, HomeIcon,
   Bell, Settings, LogOut, User as UserIcon
 } from 'lucide-react';
 import { useUser } from '@/components/context/User';
@@ -18,6 +18,7 @@ const Header = () => {
   const isActive = (path: string) => pathname === path;
 
   const navLinks = [
+    { label: 'Home', href: '/home', icon: HomeIcon },
     { label: 'Search Topics', href: '/search', icon: Search },
     { label: 'Join Community', href: '#', icon: Users },
     { label: 'My Profile', href: '/my-profile', icon: UserIcon },

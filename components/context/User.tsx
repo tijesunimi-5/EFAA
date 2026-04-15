@@ -1,5 +1,6 @@
 "use client";
 
+import { EmergencyContact } from '@/types';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
@@ -12,6 +13,7 @@ export interface User {
   email: string;
   state: string;
   role: UserRole; // Added for RBAC
+  contacts?: EmergencyContact[];
 }
 
 interface UserContextType {

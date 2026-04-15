@@ -49,6 +49,13 @@ export interface EmergencyCondition {
   steps: EmergencyStep[];
 }
 
+export interface EmergencyContact {
+  id: string;
+  name: string;
+  relationship: string;
+  phoneNumber: string;
+}
+
 export interface DailyNudge {
   id: number;
   tip: string;

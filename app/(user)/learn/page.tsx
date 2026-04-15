@@ -1,129 +1,140 @@
 "use client";
-import React, { useState } from 'react';
+
+import React from 'react';
+import { useRouter } from 'next/navigation';
 import {
-  ChevronRight,
   Activity,
   Droplets,
   Flame,
   Wind,
   Skull,
-  ArrowLeft
+  ChevronRight,
+  BookOpen,
+  PlayCircle
 } from 'lucide-react';
 import Card from '@/components/UI/Card';
-import LearnCondition from '@/components/learning/LearnCondition';
 
-
+/**
+ * Scalable configuration for educational content.
+ * Adding a new category is as simple as adding an object here.
+ */
 const CONDITIONS = [
-  { id: 'seizure', title: 'Seizure', icon: <Activity className="text-teal-600" />, color: 'bg-teal-50' },
-  { id: 'bleeding', title: 'Severe Bleeding', icon: <Droplets className="text-rose-500" />, color: 'bg-rose-50', disabled: true },
-  { id: 'burns', title: 'Burns', icon: <Flame className="text-orange-500" />, color: 'bg-orange-50', disabled: true },
-  { id: 'choking', title: 'Choking', icon: <Wind className="text-blue-500" />, color: 'bg-blue-50', disabled: true },
-  { id: 'snakebite', title: 'Snake Bite', icon: <Skull className="text-slate-400" />, color: 'bg-slate-50', disabled: true },
+  { 
+    id: 'seizure', 
+    title: 'Seizure Management', 
+    desc: 'How to protect someone during an active seizure.',
+    icon: <Activity className="text-teal-600" />, 
+    color: 'bg-teal-50', 
+    duration: '3 min read' 
+  },
+  { 
+    id: 'bleeding', 
+    title: 'Severe Bleeding', 
+    desc: 'Applying pressure and using tourniquets safely.',
+    icon: <Droplets className="text-rose-500" />, 
+    color: 'bg-rose-50', 
+    disabled: true 
+  },
+  { 
+    id: 'burns', 
+    title: 'Burns & Scalds', 
+    desc: 'Identifying burn depth and immediate cooling steps.',
+    icon: <Flame className="text-orange-500" />, 
+    color: 'bg-orange-50', 
+    disabled: true 
+  },
+  { 
+    id: 'choking', 
+    title: 'Choking (Adults)', 
+    desc: 'Mastering the Heimlich maneuver and back blows.',
+    icon: <Wind className="text-blue-500" />, 
+    color: 'bg-blue-50', 
+    disabled: true 
+  },
 ];
 
-
-
-
-
-/**
- * SUB-PAGE COMPONENTS
- */
-
-const LearningHome = ({ onSelect }: { onSelect: (id: string) => void }) => (
-  <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-    <header className="mb-10">
-      <h1 className="text-4xl font-black text-slate-900 mb-3 tracking-tight">
-        Learn First Aid
-      </h1>
-      <p className="text-lg text-slate-500 font-medium leading-relaxed">
-        One skill at a time — built for clarity and confidence.
-      </p>
-    </header>
-
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {CONDITIONS.map((c) => (
-        <Card
-          key={c.id}
-          onClick={c.disabled ? undefined : () => onSelect(c.id)}
-          className={c.disabled ? "opacity-60 grayscale" : ""}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className={`${c.color} w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner`}>
-                {c.icon}
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-800 text-lg">{c.title}</h3>
-                <p className="text-xs font-bold text-teal-600 uppercase tracking-widest mt-0.5">
-                  {c.disabled ? "Coming Soon" : "Tap to learn"}
-                </p>
-              </div>
-            </div>
-            {!c.disabled && <ChevronRight className="w-5 h-5 text-slate-300" />}
-          </div>
-        </Card>
-      ))}
-    </div>
-  </div>
-);
-
-
-
-/**
- * MAIN APP CONTAINER (ROUTING SIMULATION)
- */
-export default function App() {
-  const [view, setView] = useState<'home' | 'condition'>('home');
-  const [selectedId, setSelectedId] = useState<string>('');
-
-  const handleSelect = (id: string) => {
-    setSelectedId(id);
-    setView('condition');
-  };
-
-  const handleBack = () => {
-    setView('home');
-    setSelectedId('');
-  };
+export default function LearnLibrary() {
+  const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900 overflow-x-hidden selection:bg-teal-100">
-      <header className="bg-white px-6 py-4 flex items-center gap-4 sticky top-0 z-50 border-b border-slate-100">
-        <button
-          onClick={() => window.history.back()}
-          className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-        <div className="flex items-center gap-2">
-          <div className="bg-teal-700 p-1.5 rounded-lg">
-            <Activity className="text-white w-5 h-5" />
-          </div>
-          <span className="font-black tracking-tighter text-teal-800 text-lg uppercase">EFAA</span>
+    <div className="max-w-5xl mx-auto py-12 px-6 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      
+      {/* 1. EDUCATIONAL HERO */}
+      <header className="space-y-4">
+        <div className="flex items-center gap-3 text-teal-600">
+          <BookOpen className="w-6 h-6" />
+          <span className="font-black uppercase tracking-widest text-xs">Knowledge Base</span>
         </div>
+        <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
+          Master First Aid.
+        </h1>
+        <p className="text-xl text-slate-500 font-medium max-w-2xl leading-relaxed">
+          Interactive guides designed to build clinical confidence before an emergency happens.
+        </p>
       </header>
-      <div className="max-w-4xl mx-auto px-6 pt-12 pb-24 min-h-screen flex flex-col">
-        {view === 'home' ? (
-          <LearningHome onSelect={handleSelect} />
-        ) : (
-          <LearnCondition conditionId={selectedId} onBack={handleBack} />
-        )}
-      </div>
 
-      {/* Footer Branding */}
-      {view === 'home' && (
-        <footer className="mt-auto py-12 px-6 border-t border-slate-50 text-center">
-          <div className="flex items-center justify-center gap-2 mb-4 opacity-40">
-            <div className="bg-teal-700 p-1 rounded-md">
-              <Activity className="text-white w-4 h-4" />
-            </div>
-            <span className="font-black text-teal-800 uppercase tracking-tighter">EFAA</span>
+      {/* 2. FEATURED PATHWAY (Optional UI addition) */}
+      <Card className="bg-slate-900 border-none p-8 relative overflow-hidden group cursor-pointer">
+        <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-teal-500/20 to-transparent" />
+        <div className="relative z-10 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-teal-500/20 rounded-full text-teal-400 text-[10px] font-black uppercase tracking-widest">
+            New Course
           </div>
-          <p className="text-[10px] text-slate-300 font-bold uppercase tracking-[0.2em]">
-            First Aid Education for Nigeria
+          <h2 className="text-2xl font-black text-teal-300">The Essentials of First Aid</h2>
+          <p className="text-slate-400 font-medium max-w-md text-sm">
+            Complete our foundational 10-minute module and earn your EFAA Digital Badge.
           </p>
-        </footer>
-      )}
+          <button className="flex items-center gap-2 text-teal-400 font-black uppercase tracking-widest text-xs hover:text-white transition-colors">
+            <PlayCircle className="w-5 h-5" /> Start Learning Path
+          </button>
+        </div>
+      </Card>
+
+      {/* 3. CONDITION GRID */}
+      <section className="space-y-6">
+        <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Specific Protocols</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {CONDITIONS.map((c) => (
+            <Card
+              key={c.id}
+              onClick={c.disabled ? undefined : () => router.push(`/learn/${c.id}`)}
+              className={`group transition-all border-2 ${
+                c.disabled 
+                  ? "opacity-50 grayscale bg-slate-50/50" 
+                  : "hover:border-teal-500/30 hover:shadow-xl hover:shadow-teal-500/5 cursor-pointer"
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-5">
+                  <div className={`${c.color} w-14 h-14 rounded-[1.25rem] flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform`}>
+                    {c.icon}
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="font-black text-slate-800 text-xl tracking-tight">{c.title}</h3>
+                    <p className="text-slate-500 text-sm font-medium leading-snug max-w-[200px]">
+                      {c.desc}
+                    </p>
+                    {!c.disabled && (
+                      <div className="flex items-center gap-2 pt-2">
+                        <span className="text-[10px] font-black text-teal-600 uppercase tracking-widest">
+                          {c.duration}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {!c.disabled ? (
+                  <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-teal-600 group-hover:translate-x-1 transition-all" />
+                ) : (
+                  <span className="text-[9px] font-black text-slate-400 uppercase bg-slate-100 px-2 py-1 rounded-md">
+                    Soon
+                  </span>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
