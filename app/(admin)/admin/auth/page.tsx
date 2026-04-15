@@ -67,7 +67,8 @@ export default function AdminAuth() {
         setUser({
           fullName: result.user.fullName || result.user.full_name || 'Admin User',
           email: result.user.email,
-          state: result.user.state || 'Federal'
+          state: result.user.state || 'Federal',
+          role: 'admin',
         });
 
         router.push('/admin/users');
