@@ -33,8 +33,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   // Define route sets for cleaner logic
-  const publicPaths = ['/onboarding', '/onboarding/login', '/login', '/'];
-  const adminPaths = ['/admin'];
+  // Inside UserProvider
+  const publicPaths = ['/onboarding', '/onboarding/login', '/login', '/', '/admin/auth'];  const adminPaths = ['/admin'];
 
   const setUser = (newUser: User | null) => {
     setUserState(newUser);
@@ -57,7 +57,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const checkAuth = () => {
       if (typeof window === 'undefined') return;
-
+      
       const token = localStorage.getItem('efaa_token');
       const savedUser = localStorage.getItem('efaa_user');
 
@@ -67,9 +67,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           setUserState(parsedUser);
 
           // Role-based protection: Prevent users from accessing admin routes
-          if (parsedUser.role !== 'admin' && pathname.startsWith('/admin')) {
+         
+          if (parsedUser.role !== 'admin' && pathname.startsWith('/admin') && pathname !== '/admin/auth') {
             router.push('/home');
           }
+
         } catch (e) {
           console.error("Auth hydration failed:", e);
           logout();
