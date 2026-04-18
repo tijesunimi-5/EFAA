@@ -9,6 +9,7 @@ import {
 import { useUser } from '@/components/context/User';
 import Card from '@/components/UI/Card';
 import SButton from '@/components/UI/SButton';
+import Link from 'next/link';
 
 /**
  * MODERN DASHBOARD HUB
@@ -28,10 +29,10 @@ export default function HomeScreen() {
   };
 
   const footerLinks = [
-    { label: "Support EFAA", icon: Heart, color: "text-rose-500" },
-    { label: "Suggest Topic", icon: MessageSquare, color: "text-teal-500" },
-    { label: "Volunteer", icon: Users, color: "text-blue-500" },
-    { label: "Feedback", icon: Lightbulb, color: "text-amber-500" },
+    { label: "Support EFAA", icon: Heart, color: "text-rose-500", link: "/support" },
+    { label: "Suggest Topic", icon: MessageSquare, color: "text-teal-500", link: "suggest" },
+    { label: "Volunteer", icon: Users, color: "text-blue-500", link: "volunteer" },
+    { label: "Feedback", icon: Lightbulb, color: "text-amber-500", link: "feedback" },
   ];
 
   return (
@@ -113,13 +114,13 @@ export default function HomeScreen() {
           {footerLinks.map((link) => {
             const Icon = link.icon;
             return (
-              <button
+              <Link href={link.link}
                 key={link.label}
-                className="flex flex-col items-center gap-3 p-6 bg-slate-50 rounded-[2rem] border border-transparent hover:border-slate-200 hover:bg-white transition-all group"
+                className="flex flex-col justify-center items-center gap-3 p-6 bg-slate-50 rounded-[2rem] border border-transparent hover:border-slate-200 hover:bg-white transition-all group"
               >
                 <Icon className={`w-6 h-6 ${link.color} group-hover:scale-110 transition-transform`} />
                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{link.label}</span>
-              </button>
+              </Link>
             );
           })}
         </div>
