@@ -37,7 +37,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex min-h-screen bg-slate-50 pb-20 md:pb-0">
       {/* Desktop Sidebar */}
-      <aside className="w-64 bg-teal-900 text-white p-6 hidden md:flex flex-col">
+      <aside className="w-64  bg-teal-900 text-white p-6 hidden md:flex flex-col">
         <div className="mb-10 font-black text-2xl tracking-tight">EFAA ADMIN</div>
 
         <nav className="space-y-2 flex-1">
