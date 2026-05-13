@@ -100,26 +100,26 @@ export default function ProfilePage() {
   if (!user) return null;
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-6 space-y-10 animate-in fade-in duration-500">
+    <div className="max-w-4xl mx-auto py-6 md:py-10 px-4 md:px-6 space-y-8 md:space-y-10 animate-in fade-in duration-500">
 
       {/* 1. Header & Edit Toggle */}
-      <section className="flex items-center justify-between pb-6 border-b border-slate-100">
-        <div className="flex items-center gap-6">
-          <div className="w-20 h-20 bg-teal-900 rounded-4xl flex items-center justify-center text-white shadow-xl shadow-teal-900/20">
-            <UserIcon size={36} strokeWidth={2.5} />
+      <section className="flex flex-col sm:flex-row items-center sm:justify-between gap-6 pb-6 border-b border-slate-100">
+        <div className="flex flex-col sm:flex-row items-center gap-4 md:gap-6 text-center sm:text-left">
+          <div className="w-16 h-16 md:w-20 md:h-20 bg-teal-900 rounded-3xl md:rounded-4xl flex items-center justify-center text-white shadow-xl shadow-teal-900/20">
+            <UserIcon size={32} md:size={36} strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">
+            <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">
               {isEditing ? "Editing Profile" : user.fullName}
             </h1>
-            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">{user.email}</p>
+            <p className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-widest">{user.email}</p>
           </div>
         </div>
 
         <button
           onClick={() => isEditing ? handleUpdateProfile() : setIsEditing(true)}
           disabled={isLoading}
-          className={`p-3 rounded-2xl transition-all ${isEditing ? 'bg-teal-600 text-white shadow-lg' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+          className={`p-3 rounded-2xl transition-all shadow-sm ${isEditing ? 'bg-teal-600 text-white shadow-teal-500/20' : 'bg-white border border-slate-100 text-slate-400 hover:bg-slate-50'}`}
         >
           {isEditing ? <Check size={20} /> : <Edit3 size={20} />}
         </button>
@@ -134,7 +134,7 @@ export default function ProfilePage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
           <DetailBox
             label="Full Name"
             value={formData.fullName}
@@ -153,9 +153,9 @@ export default function ProfilePage() {
             isEditing={isEditing}
             onChange={(val) => setFormData({ ...formData, state: val })}
           />
-          <div className="p-6 bg-slate-50 rounded-4xl border border-transparent">
+          <div className="p-5 md:p-6 bg-slate-50/50 rounded-3xl md:rounded-4xl border border-transparent">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Email Address</p>
-            <p className="font-bold text-slate-400 italic">{user.email} (Locked)</p>
+            <p className="font-bold text-slate-400/70 italic text-sm md:text-base break-all">{user.email} (Locked)</p>
           </div>
         </div>
       </section>
@@ -172,52 +172,54 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-3">
           {user.contacts?.map((contact) => (
-            <Card key={contact.id} className="p-5 flex items-center justify-between border-slate-100 group hover:border-teal-200 transition-all">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-teal-50 group-hover:text-teal-600 transition-colors">
+            <Card key={contact.id} className="p-4 md:p-5 flex items-center justify-between border-slate-100 group hover:border-teal-200 transition-all shadow-xs">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-teal-50 group-hover:text-teal-600 transition-colors shrink-0">
                   <Phone size={18} />
                 </div>
-                <div>
-                  <h4 className="font-black text-slate-900 text-sm uppercase tracking-tight">{contact.name}</h4>
+                <div className="min-w-0">
+                  <h4 className="font-black text-slate-900 text-sm uppercase tracking-tight truncate">{contact.name}</h4>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{contact.relationship}</p>
                 </div>
               </div>
-              <a href={`tel:${contact.phoneNumber}`} className="text-slate-900 font-black text-sm hover:text-teal-700">{contact.phoneNumber}</a>
+              <a href={`tel:${contact.phoneNumber}`} className="text-slate-900 font-black text-sm hover:text-teal-700 whitespace-nowrap ml-2">
+                {contact.phoneNumber}
+              </a>
             </Card>
           ))}
           {(!user.contacts || user.contacts.length === 0) && (
-            <p className="text-xs text-slate-400 font-medium italic">No emergency contacts added yet.</p>
+            <p className="text-xs text-slate-400 font-medium italic py-2">No emergency contacts added yet.</p>
           )}
         </div>
       </section>
 
       {/* 4. Safety Instructions */}
-      <section className="space-y-4">
-        <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Safety Instructions</h3>
-        <Card className="bg-slate-900 border-none p-8 relative overflow-hidden">
-          <div className="relative z-10 space-y-4">
+      <section className="space-y-4 pt-4">
+        <Card className="bg-slate-900 border-none p-6 md:p-8 relative overflow-hidden">
+          <div className="relative z-10 space-y-3">
             <div className="flex items-center gap-2 text-rose-500">
               <ShieldAlert className="w-5 h-5" />
               <span className="text-[10px] font-black uppercase tracking-widest">Crucial Note</span>
             </div>
-            <p className="text-lg font-bold text-slate-300 leading-relaxed">
+            <p className="text-base md:text-lg font-bold text-slate-300 leading-relaxed">
               In any severe emergency, always ensure the area is safe for you before helping others.
               Call 112 immediately.
             </p>
           </div>
+          <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl" />
         </Card>
       </section>
 
-      <button onClick={logout} className="w-full py-4 text-rose-600 font-black uppercase text-xs tracking-[0.2em] border border-rose-100 rounded-2xl hover:bg-rose-50 transition-all">
+      <button onClick={logout} className="w-full py-4 text-rose-600 font-black uppercase text-[10px] md:text-xs tracking-[0.2em] border border-rose-100 rounded-2xl hover:bg-rose-50 transition-all active:scale-[0.98]">
         Sign Out of Account
       </button>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-4xl p-8 shadow-2xl relative">
-            <button onClick={() => setIsModalOpen(false)} className="absolute right-6 top-6 text-slate-300 hover:text-slate-900">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 shadow-2xl relative">
+            <button onClick={() => setIsModalOpen(false)} className="absolute right-4 top-4 md:right-6 md:top-6 text-slate-300 hover:text-slate-900 p-2">
               <CloseIcon size={24} />
             </button>
             <AddContact onSave={handleSaveContact} onClose={() => setIsModalOpen(false)} />
@@ -238,17 +240,17 @@ function DetailBox({ label, value, isEditing, onChange }: {
   onChange: (val: string) => void;
 }) {
   return (
-    <div className={`p-6 rounded-4xl border transition-all ${isEditing ? 'bg-white border-teal-500 ring-4 ring-teal-500/5' : 'bg-slate-50 border-transparent'}`}>
+    <div className={`p-5 md:p-6 rounded-3xl md:rounded-4xl border transition-all ${isEditing ? 'bg-white border-teal-500 ring-4 ring-teal-500/5' : 'bg-slate-50/50 border-transparent'}`}>
       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
       {isEditing ? (
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-transparent font-bold text-slate-900 outline-none border-b-2 border-teal-100 focus:border-teal-500"
+          className="w-full bg-transparent font-bold text-slate-900 outline-none border-b-2 border-teal-100 focus:border-teal-500 py-1"
         />
       ) : (
-        <p className="font-bold text-slate-900">{value || 'Not provided'}</p>
+        <p className="font-bold text-slate-900 text-sm md:text-base">{value || 'Not provided'}</p>
       )}
     </div>
   );
