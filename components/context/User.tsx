@@ -14,6 +14,7 @@ export interface User {
   state: string;
   role: UserRole; // Added for RBAC
   contacts?: EmergencyContact[];
+  phone?: string; // Optional phone field for profile
 }
 
 interface UserContextType {
