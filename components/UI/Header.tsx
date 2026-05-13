@@ -20,7 +20,7 @@ const Header = () => {
   const navLinks = [
     { label: 'Home', href: '/home', icon: HomeIcon },
     { label: 'Search Topics', href: '/search', icon: Search },
-    { label: 'Join Community', href: '#', icon: Users },
+    // { label: 'Join Community', href: '#', icon: Users },
     { label: 'My Profile', href: '/my-profile', icon: UserIcon },
   ];
 
@@ -114,9 +114,9 @@ const Header = () => {
           <div className="h-px bg-slate-100 my-6" />
 
           <div className="space-y-1">
-            <Link href="/settings" className="flex items-center gap-4 p-4 text-slate-600 font-bold hover:bg-slate-50 rounded-2xl transition-all">
+            {/* <Link href="/settings" className="flex items-center gap-4 p-4 text-slate-600 font-bold hover:bg-slate-50 rounded-2xl transition-all">
               <Settings className="w-5 h-5 text-slate-400" /> Settings
-            </Link>
+            </Link> */}
             <button
               onClick={logout}
               className="w-full flex items-center gap-4 p-4 text-rose-600 font-bold hover:bg-rose-50 rounded-2xl transition-all"
