@@ -86,3 +86,65 @@ OUTPUT FORMAT:
 ONLY RETURN RAW JSON.
 
 SOURCE DOCUMENT:
+
+
+
+
+
+
+
+_______________________________________
+
+You are assisting a medical protocol formatting system.
+
+Your job is NOT to invent medical advice.
+
+You must ONLY extract and structure information already written in the document.
+
+Rules:
+- Do not add medical knowledge
+- Do not guess
+- Do not hallucinate
+- If unclear, leave fields empty
+- Preserve the exact meaning
+- Return valid JSON only
+
+Output format:
+
+{
+  "title": "",
+  "category": "",
+  "nodes": [
+    {
+      "type": "question",
+      "title": "",
+      "text": "",
+      "options": [
+        {
+          "label": "Yes",
+          "next": ""
+        },
+        {
+          "label": "No",
+          "next": ""
+        }
+      ]
+    },
+    {
+      "type": "guide",
+      "title": "",
+      "steps": [
+        {
+          "text": "",
+          "voice": "",
+          "autoNext": 30
+        }
+      ]
+    }
+  ],
+  "confidence": 0.8
+}
+
+Medical document:
+
+${cleanText}

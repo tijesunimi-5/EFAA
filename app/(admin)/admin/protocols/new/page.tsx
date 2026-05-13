@@ -1,34 +1,4 @@
 "use client";
-
-/**
- * ═══════════════════════════════════════════════════════════════════════════
- * EFAA · Emergency Protocol Builder  —  page.tsx
- * ═══════════════════════════════════════════════════════════════════════════
- *
- * Redesigned admin clinical workflow builder.
- * Preserves the original data model and backend contracts exactly:
- *   POST /protocols        → { slug, title, category, nodes: ProtocolNodes }
- *   POST /protocols/extract → FormData { file }  → ExtractedData
- *
- * Existing hooks used as-is:
- *   useAPI()   → callApi(path, method, body)
- *   useAlert() → showAlert(message, type)
- *
- * Component tree:
- *   ProtocolCreator          ← page root / state owner
- *   ├─ TopBar                ← sticky header: brand, status, save/publish
- *   ├─ ProtocolMeta          ← title + category fields
- *   ├─ AIImportPanel         ← /protocols/extract integration (sidebar)
- *   ├─ NodeReference         ← quick node-type guide (sidebar)
- *   ├─ QuestionNodeCard      ← decision-point node editor
- *   │   └─ OptionRow         ← branch option row
- *   ├─ GuideNodeCard         ← sequential guide node editor
- *   │   └─ StepRow           ← step row (text + voice + timer)
- *   ├─ AddNodeRow            ← bottom add-node buttons
- *   ├─ PublishModal          ← gated publish confirmation
- *   └─ ClinicalGuidance      ← collapsible authoring guide
- */
-
 import React, { useState, useRef, useCallback } from "react";
 import {
   AlertCircle,
@@ -92,6 +62,7 @@ interface GuideNode {
   type: "guide";
   title: string;
   steps: Step[];
+  text?: string;
 }
 
 type ProtocolNode = QuestionNode | GuideNode;
@@ -533,6 +504,8 @@ const AIImportPanel: React.FC<{
   const [previewOpen, setPreviewOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const {showAlert} = useAlert();
+
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     setFile(f);
@@ -543,17 +516,31 @@ const AIImportPanel: React.FC<{
   const handleExtract = async () => {
     if (!file) return;
     setStatus("loading");
+
     try {
       const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/protocols/extract", { method: "POST", body: fd });
-      if (!res.ok) throw new Error("failed");
-      const data: ExtractedData = await res.json();
-      setExtracted(data);
-      setStatus("success");
-      setPreviewOpen(true);
-    } catch {
+      // The backend middleware looks for 'protocol' (upload.single('protocol'))
+      fd.append("protocol", file);
+
+      const res = await fetch("http://localhost:8000/extract", {
+        method: "POST",
+        body: fd
+        // Note: Do NOT set Content-Type header; the browser does it for FormData
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        setExtracted(result.data); // The backend wraps data in a 'data' object
+        setStatus("success");
+        setPreviewOpen(true);
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (err) {
+      console.error("Extraction Error:", err);
       setStatus("error");
+      showAlert("AI Extraction failed: " + (err as Error).message, "error");
     }
   };
 
@@ -1085,26 +1072,37 @@ export default function ProtocolCreator() {
     if (data.category) setCategory(data.category);
 
     const newNodes: ProtocolNodes = {};
+
+    // 1. First, map all AI nodes into our format using the IDs provided by AI
     data.nodes.forEach((n) => {
-      const id = makeId();
+      // Fallback to makeId if AI failed to provide a unique ID
+      const id = n.id || makeId();
+
       if (n.type === "guide") {
-        newNodes[id] = emptyGuide(id, n.title ?? "Extracted Section");
-        const steps =
-          "steps" in n && Array.isArray(n.steps)
-            ? (n.steps as Step[]).map((s) => ({
-              text: s.text ?? "",
-              voice: s.voice ?? "",
-              autoNext: s.autoNext ?? 30,
-            }))
-            : [emptyStep()];
-        (newNodes[id] as GuideNode).steps = steps;
+        newNodes[id] = {
+          id,
+          type: "guide",
+          title: n.title ?? "Extracted Section",
+          steps: Array.isArray(n.steps) ? n.steps : [emptyStep()]
+        };
       } else {
-        newNodes[id] = emptyQuestion(id, n.title ?? "Extracted Assessment");
+        const question = n as Partial<QuestionNode>;
+        newNodes[id] = {
+          id,
+          type: "question",
+          title: question.title ?? "Extracted Assessment",
+          text: question.text ?? "",
+          options: Array.isArray(question.options) ? question.options : [
+            { label: "Yes", next: "" },
+            { label: "No", next: "" },
+          ],
+        };
       }
     });
 
+    // 2. Merge with existing nodes
     setNodes((prev) => ({ ...prev, ...newNodes }));
-    showAlert("Extracted content applied. Review each node carefully.", "success");
+    showAlert(`Extracted ${data.nodes.length} nodes successfully.`, "success");
   };
 
   // ── Save (POST /protocols) ───────────────────────────────────────────────

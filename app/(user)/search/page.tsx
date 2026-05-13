@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   ArrowLeft,
@@ -15,6 +15,7 @@ import {
   SearchX,
   AlertCircle
 } from 'lucide-react';
+import { useAPI } from '@/components/hook/callApi';
 
 /**
  * TYPES & INTERFACES
@@ -28,63 +29,20 @@ interface Condition {
   color: string;
 }
 
-/**
- * DUMMY DATA
- */
-const CONDITIONS: Condition[] = [
-  {
-    id: '1',
-    slug: 'seizure',
-    name: 'Seizure',
-    description: 'Rhythmic shaking or loss of consciousness.',
-    icon: <Activity className="w-6 h-6" />,
-    color: 'bg-teal-50 text-teal-600',
-  },
-  {
-    id: '2',
-    slug: 'severe-bleeding',
-    name: 'Severe Bleeding',
-    description: 'Heavy blood loss from deep wounds.',
-    icon: <Droplets className="w-6 h-6" />,
-    color: 'bg-rose-50 text-rose-600',
-  },
-  {
-    id: '3',
-    slug: 'burns',
-    name: 'Burns',
-    description: 'Heat, chemical, or electrical skin damage.',
-    icon: <Flame className="w-6 h-6" />,
-    color: 'bg-orange-50 text-orange-600',
-  },
-  {
-    id: '4',
-    slug: 'choking',
-    name: 'Choking',
-    description: 'Blocked airway and inability to breathe.',
-    icon: <Wind className="w-6 h-6" />,
-    color: 'bg-blue-50 text-blue-600',
-  },
-  {
-    id: '5',
-    slug: 'snake-bite',
-    name: 'Snake Bite',
-    description: 'Venomous bites requiring urgent care.',
-    icon: <Skull className="w-6 h-6" />,
-    color: 'bg-slate-50 text-slate-600',
-  },
-  {
-    id: '6',
-    slug: 'unconscious',
-    name: 'Unconscious',
-    description: 'Person is non-responsive but breathing.',
-    icon: <Activity className="w-6 h-6" />,
-    color: 'bg-purple-50 text-purple-600',
-  }
-];
+interface Protocol {
+  id?: number;
+  slug: string;
+  title: string;
+  category: string;
+}
+
+interface SearchResponse {
+  success: boolean;
+  protocols: Protocol[];
+}
 
 /**
  * REUSABLE COMPONENTS
- * (In a local project, these would be in /components/search/)
  */
 
 const SearchInput = ({
@@ -105,7 +63,7 @@ const SearchInput = ({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder="Search symptoms (e.g. seizure, bleeding)"
-      className="w-full bg-white border border-slate-100 rounded-3xl py-5 pl-14 pr-12 text-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-teal-500/5 focus:border-teal-500 transition-all placeholder:text-slate-400"
+      className="w-full bg-white border border-slate-100 rounded-3xl py-5 pl-14 pr-12 text-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-teal-500/5 focus:border-teal-500 transition-all placeholder:text-slate-400 text-slate-900"
     />
     {value && (
       <button
@@ -118,9 +76,9 @@ const SearchInput = ({
   </div>
 );
 
-const ConditionCard = ({ condition }: { condition: Condition }) => (
+const ConditionCard = ({ condition, onClick }: { condition: Condition; onClick?: () => void }) => (
   <div
-    onClick={() => window.location.href = `/emergency/${condition.slug}`}
+    onClick={onClick || (() => window.location.href = `/emergency/${condition.slug}`)}
     className="bg-white rounded-4xl p-5 border border-slate-100 shadow-xs hover:shadow-md hover:border-teal-100 transition-all cursor-pointer group flex flex-col h-full"
   >
     <div className={`${condition.color} w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-inner`}>
@@ -138,10 +96,10 @@ const ConditionCard = ({ condition }: { condition: Condition }) => (
   </div>
 );
 
-const ConditionGrid = ({ conditions }: { conditions: Condition[] }) => (
+const ConditionGrid = ({ conditions, onSelect }: { conditions: Condition[]; onSelect: (c: Condition) => void }) => (
   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
     {conditions.map((c) => (
-      <ConditionCard key={c.id} condition={c} />
+      <ConditionCard key={c.id} condition={c} onClick={() => onSelect(c)} />
     ))}
   </div>
 );
@@ -150,20 +108,100 @@ const ConditionGrid = ({ conditions }: { conditions: Condition[] }) => (
  * MAIN SEARCH PAGE
  */
 export default function SearchPage() {
+  const { callApi } = useAPI();
   const [query, setQuery] = useState('');
-  const [recentSearches, setRecentSearches] = useState<string[]>(['Bleeding', 'Snake Bite']);
+  const [results, setResults] = useState<Condition[]>([]);
+  const [allProtocols, setAllProtocols] = useState<Condition[]>([]); // Holds the baseline list
+  const [isLoading, setIsLoading] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
-  const filteredConditions = useMemo(() => {
-    const lowerQuery = query.toLowerCase().trim();
-    if (!lowerQuery) return CONDITIONS;
+  // 1. Load Baseline: Fetch everything immediately on mount
+  useEffect(() => {
+    const fetchInitialProtocols = async () => {
+      setIsLoading(true);
+      try {
+        // Querying with empty string to get the full list from backend
+        const response: SearchResponse = await callApi(`/search?q=`, 'GET', {});
+        if (response.success && response.protocols) {
+          const mapped = response.protocols.map((p: Protocol) => ({
+            id: String(p.id || p.slug),
+            slug: p.slug,
+            name: p.title,
+            description: `Official first-aid protocol for ${p.title.toLowerCase()}.`,
+            icon: p.category === 'Trauma' ? <Droplets className="w-6 h-6" /> : <Activity className="w-6 h-6" />,
+            color: p.category === 'Trauma' ? 'bg-rose-50 text-rose-600' : 'bg-teal-50 text-teal-600',
+          }));
+          setAllProtocols(mapped);
+          setResults(mapped); // Populate UI with the full list
+        }
+      } catch (err) {
+        console.error("Initial Load Error:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    return CONDITIONS.filter(c =>
-      c.name.toLowerCase().includes(lowerQuery) ||
-      c.description.toLowerCase().includes(lowerQuery)
-    );
-  }, [query]);
+    fetchInitialProtocols();
 
-  const handleClear = () => setQuery('');
+    const saved = localStorage.getItem('efaa_recent_queries');
+    if (saved) {
+      try {
+        setRecentSearches(JSON.parse(saved));
+      } catch (e) {
+        setRecentSearches([]);
+      }
+    }
+  }, [callApi]);
+
+  // 2. Filter Logic: Debounced Search against API
+  useEffect(() => {
+    // If query is deleted, instantly snap back to the full list (no API call needed)
+    if (query.trim().length === 0) {
+      setResults(allProtocols);
+      return;
+    }
+
+    const fetchResults = async () => {
+      const searchTerms = query.trim();
+      setIsLoading(true);
+      try {
+        const response: SearchResponse = await callApi(`/topics/search?q=${encodeURIComponent(searchTerms)}`, 'GET', {});
+        if (response.success && response.protocols) {
+          const mappedResults = response.protocols.map((p: Protocol) => ({
+            id: String(p.id || p.slug),
+            slug: p.slug,
+            name: p.title,
+            description: `Official first-aid protocol for ${p.title.toLowerCase()}.`,
+            icon: p.category === 'Trauma' ? <Droplets className="w-6 h-6" /> : <Activity className="w-6 h-6" />,
+            color: p.category === 'Trauma' ? 'bg-rose-50 text-rose-600' : 'bg-teal-50 text-teal-600',
+          }));
+          setResults(mappedResults);
+        }
+      } catch (err) {
+        console.error("Search API Error:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(fetchResults, 350);
+    return () => clearTimeout(debounceTimer);
+  }, [query, callApi, allProtocols]);
+
+  const handleClear = () => {
+    setQuery('');
+    setResults(allProtocols); // Instantly revert to full list
+  };
+
+  const handleSelectCondition = (condition: Condition) => {
+    // Update local persistence
+    const updatedRecents = [condition.name, ...recentSearches.filter(s => s !== condition.name)].slice(0, 5);
+    setRecentSearches(updatedRecents);
+    localStorage.setItem('efaa_recent_queries', JSON.stringify(updatedRecents));
+
+    // Redirect to the condition engine
+    window.location.href = `/emergency/${condition.slug}`;
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-teal-100">
@@ -178,7 +216,7 @@ export default function SearchPage() {
             <ArrowLeft className="w-6 h-6" />
           </button>
           <div>
-            <h1 className="text-xl font-black tracking-tight text-slate-900">Search Conditions</h1>
+            <h1 className="text-xl font-black tracking-tight text-slate-900 uppercase">Search</h1>
             <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Guidance in seconds</p>
           </div>
         </div>
@@ -201,7 +239,7 @@ export default function SearchPage() {
           />
         </div>
 
-        {/* --- Recent Searches (Bonus) --- */}
+        {/* --- Recent Searches (Visible only when not typing) --- */}
         {!query && recentSearches.length > 0 && (
           <div className="mb-10 animate-in fade-in slide-in-from-top-2 duration-500">
             <div className="flex items-center gap-2 mb-4 text-slate-400">
@@ -226,15 +264,20 @@ export default function SearchPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-              {query ? `Search Results (${filteredConditions.length})` : 'Common Conditions'}
+              {isLoading
+                ? 'Searching database...'
+                : query
+                  ? `Search Results (${results.length})`
+                  : 'Emergency Textbook'
+              }
             </h3>
           </div>
 
-          {filteredConditions.length > 0 ? (
+          {results.length > 0 ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <ConditionGrid conditions={filteredConditions} />
+              <ConditionGrid conditions={results} onSelect={handleSelectCondition} />
             </div>
-          ) : (
+          ) : query.length >= 2 && !isLoading ? (
             /* --- Empty State --- */
             <div className="bg-white rounded-[2.5rem] p-12 text-center border border-slate-100 shadow-sm animate-in zoom-in-95 duration-500">
               <div className="bg-slate-50 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6">
@@ -242,7 +285,7 @@ export default function SearchPage() {
               </div>
               <h3 className="text-xl font-bold text-slate-800 mb-2">No condition found</h3>
               <p className="text-slate-500 mb-8 max-w-xs mx-auto">
-                Try searching for a broad term like &quot;shaking&quot; or &quot;bleeding&quot;.
+                Try searching for a broad term like &quot;shaking&quot;, &quot;breathing&quot; or &quot;bleeding&quot;.
               </p>
               <button
                 onClick={handleClear}
@@ -251,11 +294,17 @@ export default function SearchPage() {
                 Clear search and try again
               </button>
             </div>
+          ) : !query && !isLoading && (
+            /* --- Baseline Empty State (If DB is empty) --- */
+            <div className="text-center py-20 opacity-40">
+              <Activity className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+              <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Database is currently empty</p>
+            </div>
           )}
         </div>
 
         {/* --- Safety Nudge --- */}
-        <div className="mt-16 bg-teal-900 rounded-4xl p-8 text-white relative overflow-hidden">
+        <div className="mt-16 bg-teal-900 rounded-4xl p-8 text-white relative overflow-hidden shadow-2xl">
           <div className="relative z-10 flex gap-4">
             <div className="bg-white/10 p-3 rounded-2xl h-fit shrink-0">
               <AlertCircle className="w-6 h-6 text-teal-300" />
@@ -273,17 +322,13 @@ export default function SearchPage() {
               </a>
             </div>
           </div>
-          {/* Decorative Background */}
           <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-teal-800 rounded-full blur-3xl opacity-50" />
         </div>
-
       </main>
-
     </div>
   );
 }
 
-// Simple fallback icon component
 const PhoneIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
     <path d="M6.62 10.79a15.15 15.15 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.11-.27 11.72 11.72 0 0 0 3.67.58 1 1 0 0 1 1 1v3.59a1 1 0 0 1-1 1A16 16 0 0 1 3 4a1 1 0 0 1 1-1h3.59a1 1 0 0 1 1 1 11.72 11.72 0 0 0 .58 3.67 1 1 0 0 1-.27 1.11l-2.2 2.2z" />
