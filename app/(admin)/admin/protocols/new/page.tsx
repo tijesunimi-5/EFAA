@@ -522,7 +522,7 @@ const AIImportPanel: React.FC<{
       // The backend middleware looks for 'protocol' (upload.single('protocol'))
       fd.append("protocol", file);
 
-      const res = await fetch("http://localhost:8000/extract", {
+      const res = await fetch("https://efaa-backend.onrender.com/extract", {
         method: "POST",
         body: fd
         // Note: Do NOT set Content-Type header; the browser does it for FormData
