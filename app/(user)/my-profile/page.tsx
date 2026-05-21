@@ -106,7 +106,7 @@ export default function ProfilePage() {
       <section className="flex flex-col sm:flex-row items-center sm:justify-between gap-6 pb-6 border-b border-slate-100">
         <div className="flex flex-col sm:flex-row items-center gap-4 md:gap-6 text-center sm:text-left">
           <div className="w-16 h-16 md:w-20 md:h-20 bg-teal-900 rounded-3xl md:rounded-4xl flex items-center justify-center text-white shadow-xl shadow-teal-900/20">
-            <UserIcon size={32} md:size={36} strokeWidth={2.5} />
+            <UserIcon size={32} className='md:text-[36px]' strokeWidth={2.5} />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">

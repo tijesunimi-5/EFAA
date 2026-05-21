@@ -2,6 +2,7 @@
 
 import React, { ReactNode, ButtonHTMLAttributes } from "react";
 import { CheckCircle2, ChevronRight, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 
 /**
  * TYPES & INTERFACES
@@ -91,6 +92,9 @@ const StepWelcome = ({ onNext }: StepWelcomeProps) => {
       <SButton onClick={onNext} variant="primary">
         Get Started <ChevronRight className="w-5 h-5" />
       </SButton>
+      
+      <Link href="/onboarding/login" className="bg-teal-700 text-white hover:bg-teal-800 shadow-md w-full py-4 rounded-2xl font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-2.5">Sign In<ChevronRight className="w-5 h-5" /></Link>
+      
 
       <p className="mt-6 text-xs text-slate-400 uppercase tracking-widest font-bold">
         Nigeria&apos;s First Aid Companion
